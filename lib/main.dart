@@ -1,10 +1,15 @@
+import 'package:carmarketplace/screens/authstate.dart';
 import 'package:carmarketplace/screens/login_screen.dart';
 import 'package:carmarketplace/screens/register_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:carmarketplace/screens/welcome_screen.dart';// Import your WelcomePage
+import 'package:carmarketplace/screens/welcome_screen.dart'; // Import your WelcomePage
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  return runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -18,7 +23,8 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home:  WelcomeScreen() , // Changed to your WelcomePage
+      
+     home: Authstate(),// Changed to your WelcomePage
     );
   }
 }

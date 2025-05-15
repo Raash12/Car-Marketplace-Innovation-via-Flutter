@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "713769116125",
+    "project_id": "carauth-ea665",
+    "storage_bucket": "carauth-ea665.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:713769116125:android:57f2c3dc39e2d0732cd634",
+        "android_client_info": {
+          "package_name": "com.example.carmarketplace"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBJSbDy9iwfEfOXnTbmFNUt5yOqmZ_J3AE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
