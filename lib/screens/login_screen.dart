@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:carmarketplace/screens/home_screen.dart';
 import 'package:carmarketplace/screens/register_screen.dart';
 
 class LoginScreen extends StatelessWidget {
@@ -9,7 +11,6 @@ class LoginScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -28,16 +29,7 @@ class LoginScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => const RegistrationScreen()),
-                      );
-                    },
-                    child: const Icon(Icons.arrow_back, color: Colors.black),
-                  ),
+                  const Icon(Icons.arrow_back, color: Colors.black),
                   const SizedBox(height: 24),
                   const Text(
                     "Hi Welcome\nBack!",
@@ -56,7 +48,7 @@ class LoginScreen extends StatelessWidget {
                       ),
                       GestureDetector(
                         onTap: () {
-                          Navigator.push(
+                          Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
                                 builder: (_) => const RegistrationScreen()),
@@ -93,6 +85,7 @@ class LoginScreen extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Column(
                     children: [
+                      // Email
                       Container(
                         decoration: BoxDecoration(
                           border: Border.all(color: Colors.orange),
@@ -104,11 +97,13 @@ class LoginScreen extends StatelessWidget {
                             border: InputBorder.none,
                             contentPadding: EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 16),
-                            hintText: 'Full Name or Email',
+                            hintText: 'Email',
                           ),
                         ),
                       ),
                       const SizedBox(height: 16),
+
+                      // Password
                       Container(
                         decoration: BoxDecoration(
                           border: Border.all(color: Colors.orange),
@@ -126,19 +121,45 @@ class LoginScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 24),
+
+                      // Sign In button
                       ElevatedButton(
-                        onPressed: () {
-                          // TODO: Add sign in logic
-                          print("Email: ${_emailcontroller.text}");
-                          print("Password: ${_passwordcontroller.text}");
+                        onPressed: () async {
+                          final email = _emailcontroller.text.trim();
+                          final password = _passwordcontroller.text.trim();
+
+                          try {
+                            await FirebaseAuth.instance
+                                .signInWithEmailAndPassword(
+                                    email: email, password: password);
+
+                            // Navigate to Home if successful
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const HomeScreen()),
+                            );
+                          } on FirebaseAuthException catch (e) {
+                            // If login fails, go to Registration screen
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text("Login failed: ${e.message}"),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const RegistrationScreen()),
+                            );
+                          }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.black,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
-                            side:
-                                const BorderSide(color: Colors.orange, width: 2),
+                            side: const BorderSide(color: Colors.orange, width: 2),
                           ),
                         ),
                         child: const Center(
