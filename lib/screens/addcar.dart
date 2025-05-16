@@ -34,27 +34,33 @@ class _AddCarPageState extends State<AddCarPage> {
 
   Future<void> _addCarToFirestore() async {
     if (_formKey.currentState!.validate() && _image != null) {
-      await FirebaseFirestore.instance.collection('carlist').add({
-        'name': _nameController.text.trim(),
-        'price': _priceController.text.trim(),
-        'description': _descriptionController.text.trim(),
-        'quantity': int.parse(_quantityController.text.trim()),
-        'specifications': {
-          'mileage': _mileageController.text.trim(),
-          'fuelType': _fuelType,
-        },
-        'imagePath': _image!.path, // Local file path stored as string
-      });
+      try {
+        await FirebaseFirestore.instance.collection('carlist').add({
+          'name': _nameController.text.trim(),
+          'price': _priceController.text.trim(),
+          'description': _descriptionController.text.trim(),
+          'quantity': int.parse(_quantityController.text.trim()),
+          'specifications': {
+            'mileage': _mileageController.text.trim(),
+            'fuelType': _fuelType,
+          },
+          'imagePath': _image!.path, // Local file path stored as string
+        });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Car added successfully')),
-      );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Car added successfully')),
+        );
 
-      _formKey.currentState!.reset();
-      setState(() {
-        _image = null;
-        _fuelType = 'Petrol';
-      });
+        _formKey.currentState!.reset();
+        setState(() {
+          _image = null;
+          _fuelType = 'Petrol';
+        });
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error adding car: $e')),
+        );
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please complete all fields & select an image')),
