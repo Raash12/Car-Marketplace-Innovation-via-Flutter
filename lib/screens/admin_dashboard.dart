@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 class AdminDashboard extends StatefulWidget {
@@ -8,26 +11,7 @@ class AdminDashboard extends StatefulWidget {
 }
 
 class _AdminDashboardState extends State<AdminDashboard> {
-  final List<Map<String, dynamic>> imageList = [
-    {
-      'image': 'image/car0.jpg',
-      'title': 'Luxury Sedan',
-      'description': 'Experience premium comfort and performance',
-      'color': Colors.blue[800]!,
-    },
-    {
-      'image': 'image/car00.jpg',
-      'title': 'Sports Car',
-      'description': 'Unmatched speed and sleek design',
-      'color': Colors.red[800]!,
-    },
-    {
-      'image': 'image/car000.jpg',
-      'title': 'Electric Vehicle',
-      'description': 'Eco-friendly with cutting-edge technology',
-      'color': Colors.green[800]!,
-    },
-  ];
+  List<String> imagePaths = [];
 
   late final PageController _pageController;
   int _currentPage = 0;
@@ -41,12 +25,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   void _startAutoPlay() {
     Future.delayed(const Duration(seconds: 3), () {
-      if (_currentPage < imageList.length - 1) {
+      if (!mounted) return;
+      if (_currentPage < imagePaths.length - 1) {
         _currentPage++;
       } else {
         _currentPage = 0;
       }
-      if (_pageController.hasClients) {
+      if (_pageController.hasClients && imagePaths.isNotEmpty) {
         _pageController.animateToPage(
           _currentPage,
           duration: const Duration(milliseconds: 800),
@@ -57,11 +42,49 @@ class _AdminDashboardState extends State<AdminDashboard> {
     });
   }
 
+  Future<void> pickImage() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+    );
+
+    if (result != null) {
+      String? filePath = result.files.single.path;
+      if (filePath != null) {
+        setState(() {
+          imagePaths.add(filePath);
+          _currentPage = imagePaths.length - 1;
+          _pageController.jumpToPage(_currentPage);
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       drawer: _buildDrawer(),
+      appBar: AppBar(
+        title: const Text('Car Marketplace Admin'),
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu),
+            onPressed: () {
+              Scaffold.of(context).openDrawer();
+            },
+          ),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add_photo_alternate_outlined),
+            onPressed: pickImage,
+            tooltip: 'Pick image from PC',
+          )
+        ],
+      ),
       body: Stack(
         children: [
           Container(
@@ -76,92 +99,78 @@ class _AdminDashboardState extends State<AdminDashboard> {
           SingleChildScrollView(
             child: Column(
               children: [
-                AppBar(
-                  title: const Text('Car Marketplace Admin'),
-                  centerTitle: true,
-                  backgroundColor: Colors.transparent,
-                  elevation: 0,
-                  leading: Builder(
-                    builder: (context) => IconButton(
-                      icon: const Icon(Icons.menu),
-                      onPressed: () {
-                        Scaffold.of(context).openDrawer();
-                      },
-                    ),
-                  ),
-                ),
                 SizedBox(
                   height: 300,
-                  child: PageView.builder(
-                    controller: _pageController,
-                    itemCount: imageList.length,
-                    onPageChanged: (index) {
-                      setState(() {
-                        _currentPage = index;
-                      });
-                    },
-                    itemBuilder: (context, index) {
-                      final item = imageList[index];
-                      return AnimatedBuilder(
-                        animation: _pageController,
-                        builder: (context, child) {
-                          double value = 1.0;
-                          if (_pageController.position.haveDimensions) {
-                            value = _pageController.page! - index;
-                            value = (1 - (value.abs() * 0.3)).clamp(0.0, 1.0);
-                          }
-                          return Transform.scale(scale: value, child: child);
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(16),
-                            child: Stack(
-                              fit: StackFit.expand,
-                              children: [
-                                Image.asset(item['image'], fit: BoxFit.cover),
-                                Container(
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      begin: Alignment.bottomCenter,
-                                      end: Alignment.topCenter,
-                                      colors: [
-                                        item['color'].withOpacity(0.8),
-                                        Colors.transparent,
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                Positioned(
-                                  left: 20,
-                                  bottom: 40,
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: imagePaths.isEmpty
+                      ? Center(
+                          child: Text(
+                            'No images selected.\nTap the + button to pick images.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.grey[700],
+                            ),
+                          ),
+                        )
+                      : PageView.builder(
+                          controller: _pageController,
+                          itemCount: imagePaths.length,
+                          onPageChanged: (index) {
+                            setState(() {
+                              _currentPage = index;
+                            });
+                          },
+                          itemBuilder: (context, index) {
+                            final imagePath = imagePaths[index];
+                            return AnimatedBuilder(
+                              animation: _pageController,
+                              builder: (context, child) {
+                                double value = 1.0;
+                                if (_pageController.position.haveDimensions) {
+                                  value = _pageController.page! - index;
+                                  value = (1 - (value.abs() * 0.3)).clamp(0.0, 1.0);
+                                }
+                                return Transform.scale(scale: value, child: child);
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: Stack(
+                                    fit: StackFit.expand,
                                     children: [
-                                      Text(
-                                        item['title'],
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 28,
-                                          fontWeight: FontWeight.bold,
-                                          shadows: [
-                                            Shadow(
-                                              blurRadius: 10,
-                                              color: Colors.black45,
-                                            ),
-                                          ],
+                                      Image.file(File(imagePath), fit: BoxFit.cover),
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            begin: Alignment.bottomCenter,
+                                            end: Alignment.topCenter,
+                                            colors: [
+                                              Colors.black.withOpacity(0.6),
+                                              Colors.transparent,
+                                            ],
+                                          ),
                                         ),
                                       ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        item['description'],
-                                        style: TextStyle(
-                                          color: Colors.white.withOpacity(0.9),
-                                          fontSize: 16,
-                                          shadows: const [
-                                            Shadow(
-                                              blurRadius: 10,
-                                              color: Colors.black45,
+                                      Positioned(
+                                        left: 20,
+                                        bottom: 40,
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Selected Image ${index + 1}',
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 28,
+                                                fontWeight: FontWeight.bold,
+                                                shadows: [
+                                                  Shadow(
+                                                    blurRadius: 10,
+                                                    color: Colors.black45,
+                                                  ),
+                                                ],
+                                              ),
                                             ),
                                           ],
                                         ),
@@ -169,13 +178,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                     ],
                                   ),
                                 ),
-                              ],
-                            ),
-                          ),
+                              ),
+                            );
+                          },
                         ),
-                      );
-                    },
-                  ),
                 ),
                 const SizedBox(height: 20),
                 Padding(
@@ -239,8 +245,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  const Color.fromARGB(255, 231, 163, 4)!,
-                  const Color.fromARGB(255, 242, 179, 6)!
+                  const Color.fromARGB(255, 231, 163, 4),
+                  const Color.fromARGB(255, 242, 179, 6)
                 ],
               ),
             ),
