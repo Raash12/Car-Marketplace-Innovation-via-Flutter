@@ -1,5 +1,6 @@
 name: carmarketplace
 description: "A new Flutter project."
+
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -15,6 +16,9 @@ dependencies:
   cupertino_icons: ^1.0.8
   firebase_core: ^3.13.0
   firebase_auth: ^5.5.3
+  cloud_firestore: ^5.6.7
+  image_picker: ^1.0.4
+  file_picker: ^6.1.1
 
 dev_dependencies:
   flutter_test:
@@ -24,4 +28,4 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-   - image/ # Direct file reference# Fixed indentation (2 spaces)
+    - image/
