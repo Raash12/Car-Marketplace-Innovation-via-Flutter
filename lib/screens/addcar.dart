@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
@@ -35,6 +36,17 @@ class _AddCarPageState extends State<AddCarPage> {
   Future<void> _addCarToFirestore() async {
     if (_formKey.currentState!.validate() && _image != null) {
       try {
+        // Upload image to Firebase Storage
+        final storageRef = FirebaseStorage.instance
+            .ref()
+            .child('car_images/${DateTime.now().millisecondsSinceEpoch}.jpg');
+
+        await storageRef.putFile(_image!);  // Await upload directly, no variable needed
+
+        // Get the download URL
+        final imageUrl = await storageRef.getDownloadURL();
+
+        // Save car data with imageUrl in Firestore
         await FirebaseFirestore.instance.collection('carlist').add({
           'name': _nameController.text.trim(),
           'price': _priceController.text.trim(),
@@ -44,7 +56,7 @@ class _AddCarPageState extends State<AddCarPage> {
             'mileage': _mileageController.text.trim(),
             'fuelType': _fuelType,
           },
-          'imagePath': _image!.path, // Local file path stored as string
+          'imageUrl': imageUrl,  // Store URL, NOT local path
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
