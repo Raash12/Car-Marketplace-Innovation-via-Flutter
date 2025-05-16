@@ -211,7 +211,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       child: Text(
                         'View All',
                         style: TextStyle(
-                          color: Colors.blue[800],
+                          color: const Color.fromARGB(255, 227, 175, 7),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -230,10 +230,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     mainAxisSpacing: 16,
                     children: [
                       _buildIcon(Icons.dashboard, 'Dashboard', Colors.blue),
-                      _buildIcon(Icons.car_rental, 'Vehicles', Colors.orange),
+                      _buildIcon(Icons.car_rental, 'add car', Colors.orange),
                       _buildIcon(Icons.people, 'Customers', Colors.green),
                       _buildIcon(Icons.receipt, 'Orders', Colors.teal),
-                      _buildIcon(Icons.chat, 'Messages', Colors.purple),
+                      _buildIcon(Icons.chat, 'Manage users', Colors.purple),
                       _buildIcon(Icons.settings, 'Settings', Colors.red),
                     ],
                   ),
@@ -254,7 +254,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
           DrawerHeader(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [Colors.blue[800]!, Colors.blue[600]!],
+                colors: [const Color.fromARGB(255, 231, 163, 4)!, const Color.fromARGB(255, 242, 179, 6)!],
               ),
             ),
             child: const Column(
@@ -282,10 +282,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
             ),
           ),
           _buildDrawerItem(Icons.dashboard, 'Dashboard'),
-          _buildDrawerItem(Icons.car_rental, 'Vehicles'),
+          _buildDrawerItem(Icons.car_rental, 'add car'),
           _buildDrawerItem(Icons.people, 'Customers'),
           _buildDrawerItem(Icons.receipt, 'Orders'),
-          _buildDrawerItem(Icons.chat, 'Messages'),
+          _buildDrawerItem(Icons.chat, 'Manage users'),
           _buildDrawerItem(Icons.settings, 'Settings'),
           const Divider(),
           _buildDrawerItem(Icons.logout, 'Logout'),
