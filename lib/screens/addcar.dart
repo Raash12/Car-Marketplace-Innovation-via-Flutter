@@ -21,20 +21,39 @@ class _AddCarPageState extends State<AddCarPage> {
 
   String _fuelType = 'Petrol';
   File? _image;
-  final picker = ImagePicker();
+
+  final ImagePicker picker = ImagePicker();
 
   Future<void> _pickImage() async {
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() {
-        _image = File(pickedFile.path);
-      });
+    try {
+      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+      if (pickedFile != null) {
+        final file = File(pickedFile.path);
+        if (await file.exists()) {
+          setState(() {
+            _image = file;
+          });
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Selected file does not exist.')),
+          );
+        }
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Image selection failed: $e')),
+      );
     }
   }
 
   Future<void> _addCarToFirestore() async {
     if (_formKey.currentState!.validate() && _image != null) {
       try {
+        // Check if image file really exists
+        if (!await _image!.exists()) {
+          throw Exception("Image file doesn't exist. Try selecting again.");
+        }
+
         // Upload image to Firebase Storage
         final storageRef = FirebaseStorage.instance
             .ref()
@@ -42,8 +61,6 @@ class _AddCarPageState extends State<AddCarPage> {
 
         final uploadTask = storageRef.putFile(_image!);
         final TaskSnapshot snapshot = await uploadTask;
-
-        // Get the download URL
         final imageUrl = await snapshot.ref.getDownloadURL();
 
         // Save car data with imageUrl in Firestore
@@ -57,6 +74,7 @@ class _AddCarPageState extends State<AddCarPage> {
             'fuelType': _fuelType,
           },
           'imageUrl': imageUrl,
+          'createdAt': Timestamp.now(),
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -75,7 +93,7 @@ class _AddCarPageState extends State<AddCarPage> {
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please complete all fields & select an image')),
+        const SnackBar(content: Text('Please complete all fields and select an image.')),
       );
     }
   }
@@ -120,6 +138,7 @@ class _AddCarPageState extends State<AddCarPage> {
               ),
               DropdownButtonFormField<String>(
                 value: _fuelType,
+                decoration: const InputDecoration(labelText: 'Fuel Type'),
                 items: ['Petrol', 'Diesel', 'Electric', 'Hybrid']
                     .map((type) => DropdownMenuItem(
                           value: type,
@@ -131,12 +150,12 @@ class _AddCarPageState extends State<AddCarPage> {
                     _fuelType = value!;
                   });
                 },
-                decoration: const InputDecoration(labelText: 'Fuel Type'),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               _image == null
                   ? const Text('No image selected')
                   : Image.file(_image!, height: 150),
+              const SizedBox(height: 10),
               ElevatedButton.icon(
                 onPressed: _pickImage,
                 icon: const Icon(Icons.image),
