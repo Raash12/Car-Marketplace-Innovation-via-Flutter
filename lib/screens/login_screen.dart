@@ -30,7 +30,7 @@ class LoginScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Icon(Icons.arrow_back, color: Colors.black),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
                   const Text(
                     "Hi Welcome\nBack!",
                     style: TextStyle(
@@ -69,114 +69,108 @@ class LoginScreen extends StatelessWidget {
               ),
             ),
 
-            // Car Image
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 24.0),
-              child: Image.asset(
-                'image/car2.jpeg',
-                height: 180,
-              ),
+            const SizedBox(height: 16),
+
+            // Car Image (smaller)
+            Image.asset(
+              'image/car2.jpeg',
+              height: 100,
             ),
 
-            // Login form
-            Expanded(
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Column(
-                    children: [
-                      // Email
-                      Container(
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.orange),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: TextField(
-                          controller: _emailcontroller,
-                          decoration: const InputDecoration(
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 16),
-                            hintText: 'Email',
-                          ),
-                        ),
+            const SizedBox(height: 16),
+
+            // Login form (no scroll)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                children: [
+                  // Email
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.orange),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: TextField(
+                      controller: _emailcontroller,
+                      decoration: const InputDecoration(
+                        border: InputBorder.none,
+                        contentPadding:
+                            EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        hintText: 'Email',
                       ),
-                      const SizedBox(height: 16),
-
-                      // Password
-                      Container(
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.orange),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: TextField(
-                          controller: _passwordcontroller,
-                          obscureText: true,
-                          decoration: const InputDecoration(
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 16),
-                            hintText: 'Password',
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Sign In button
-                      ElevatedButton(
-                        onPressed: () async {
-                          final email = _emailcontroller.text.trim();
-                          final password = _passwordcontroller.text.trim();
-
-                          try {
-                            await FirebaseAuth.instance
-                                .signInWithEmailAndPassword(
-                                    email: email, password: password);
-
-                            // Navigate to Home if successful
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) => const HomeScreen()),
-                            );
-                          } on FirebaseAuthException catch (e) {
-                            // If login fails, go to Registration screen
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text("Login failed: ${e.message}"),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) => const RegistrationScreen()),
-                            );
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.black,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            side: const BorderSide(color: Colors.orange, width: 2),
-                          ),
-                        ),
-                        child: const Center(
-                          child: Text(
-                            "Sign in",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              decoration: TextDecoration.underline,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 40),
-                    ],
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 16),
+
+                  // Password
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.orange),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: TextField(
+                      controller: _passwordcontroller,
+                      obscureText: true,
+                      decoration: const InputDecoration(
+                        border: InputBorder.none,
+                        contentPadding:
+                            EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        hintText: 'Password',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Sign In button
+                  ElevatedButton(
+                    onPressed: () async {
+                      final email = _emailcontroller.text.trim();
+                      final password = _passwordcontroller.text.trim();
+
+                      try {
+                        await FirebaseAuth.instance
+                            .signInWithEmailAndPassword(
+                                email: email, password: password);
+
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const HomeScreen()),
+                        );
+                      } on FirebaseAuthException catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text("Login failed: ${e.message}"),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const RegistrationScreen()),
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: const BorderSide(color: Colors.orange, width: 2),
+                      ),
+                    ),
+                    child: const Center(
+                      child: Text(
+                        "Sign in",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
