@@ -262,7 +262,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               children: [
                 CircleAvatar(
                   radius: 30,
-                  backgroundImage: AssetImage('assets/images/profile.jpg'),
+                  backgroundImage: AssetImage('image/profile.jpg'),
                 ),
                 SizedBox(height: 10),
                 Text(
