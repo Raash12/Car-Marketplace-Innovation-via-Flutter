@@ -21,7 +21,6 @@ class _AddCarPageState extends State<AddCarPage> {
 
   String _fuelType = 'Petrol';
   File? _image;
-
   final picker = ImagePicker();
 
   Future<void> _pickImage() async {
@@ -41,10 +40,11 @@ class _AddCarPageState extends State<AddCarPage> {
             .ref()
             .child('car_images/${DateTime.now().millisecondsSinceEpoch}.jpg');
 
-        await storageRef.putFile(_image!);  // Await upload directly, no variable needed
+        final uploadTask = storageRef.putFile(_image!);
+        final TaskSnapshot snapshot = await uploadTask;
 
         // Get the download URL
-        final imageUrl = await storageRef.getDownloadURL();
+        final imageUrl = await snapshot.ref.getDownloadURL();
 
         // Save car data with imageUrl in Firestore
         await FirebaseFirestore.instance.collection('carlist').add({
@@ -56,7 +56,7 @@ class _AddCarPageState extends State<AddCarPage> {
             'mileage': _mileageController.text.trim(),
             'fuelType': _fuelType,
           },
-          'imageUrl': imageUrl,  // Store URL, NOT local path
+          'imageUrl': imageUrl,
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
