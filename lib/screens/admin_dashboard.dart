@@ -273,7 +273,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   ),
                 ),
                 Text(
-                  'admin@example.com',
+                  'ikar @example.com',
                   style: TextStyle(
                     color: Colors.white70,
                   ),
