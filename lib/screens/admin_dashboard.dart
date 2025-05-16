@@ -64,182 +64,166 @@ class _AdminDashboardState extends State<AdminDashboard> {
       drawer: _buildDrawer(),
       body: Stack(
         children: [
-          // Background Gradient
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [
-                  Colors.blueGrey[50]!,
-                  Colors.grey[200]!,
-                ],
+                colors: [Colors.blueGrey[50]!, Colors.grey[200]!],
               ),
             ),
           ),
-          Column(
-            children: [
-              // App Bar
-              AppBar(
-                title: const Text('Car Marketplace Admin'),
-                centerTitle: true,
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                leading: Builder(
-                  builder: (context) => IconButton(
-                    icon: const Icon(Icons.menu),
-                    onPressed: () {
-                      Scaffold.of(context).openDrawer();
-                    },
+          SingleChildScrollView(
+            child: Column(
+              children: [
+                AppBar(
+                  title: const Text('Car Marketplace Admin'),
+                  centerTitle: true,
+                  backgroundColor: Colors.transparent,
+                  elevation: 0,
+                  leading: Builder(
+                    builder: (context) => IconButton(
+                      icon: const Icon(Icons.menu),
+                      onPressed: () {
+                        Scaffold.of(context).openDrawer();
+                      },
+                    ),
                   ),
                 ),
-              ),
-
-              // Image Carousel
-              SizedBox(
-                height: 300,
-                child: PageView.builder(
-                  controller: _pageController,
-                  itemCount: imageList.length,
-                  onPageChanged: (index) {
-                    setState(() {
-                      _currentPage = index;
-                    });
-                  },
-                  itemBuilder: (context, index) {
-                    final item = imageList[index];
-                    return AnimatedBuilder(
-                      animation: _pageController,
-                      builder: (context, child) {
-                        double value = 1.0;
-                        if (_pageController.position.haveDimensions) {
-                          value = _pageController.page! - index;
-                          value = (1 - (value.abs() * 0.3)).clamp(0.0, 1.0);
-                        }
-                        return Transform.scale(
-                          scale: value,
-                          child: child,
-                        );
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
-                          child: Stack(
-                            fit: StackFit.expand,
-                            children: [
-                              Image.asset(
-                                item['image'],
-                                fit: BoxFit.cover,
-                              ),
-                              Container(
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    begin: Alignment.bottomCenter,
-                                    end: Alignment.topCenter,
-                                    colors: [
-                                      item['color'].withOpacity(0.8),
-                                      Colors.transparent,
+                SizedBox(
+                  height: 300,
+                  child: PageView.builder(
+                    controller: _pageController,
+                    itemCount: imageList.length,
+                    onPageChanged: (index) {
+                      setState(() {
+                        _currentPage = index;
+                      });
+                    },
+                    itemBuilder: (context, index) {
+                      final item = imageList[index];
+                      return AnimatedBuilder(
+                        animation: _pageController,
+                        builder: (context, child) {
+                          double value = 1.0;
+                          if (_pageController.position.haveDimensions) {
+                            value = _pageController.page! - index;
+                            value = (1 - (value.abs() * 0.3)).clamp(0.0, 1.0);
+                          }
+                          return Transform.scale(scale: value, child: child);
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                Image.asset(item['image'], fit: BoxFit.cover),
+                                Container(
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.bottomCenter,
+                                      end: Alignment.topCenter,
+                                      colors: [
+                                        item['color'].withOpacity(0.8),
+                                        Colors.transparent,
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                Positioned(
+                                  left: 20,
+                                  bottom: 40,
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        item['title'],
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 28,
+                                          fontWeight: FontWeight.bold,
+                                          shadows: [
+                                            Shadow(
+                                              blurRadius: 10,
+                                              color: Colors.black45,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        item['description'],
+                                        style: TextStyle(
+                                          color: Colors.white.withOpacity(0.9),
+                                          fontSize: 16,
+                                          shadows: const [
+                                            Shadow(
+                                              blurRadius: 10,
+                                              color: Colors.black45,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ),
-                              ),
-                              Positioned(
-                                left: 20,
-                                bottom: 40,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      item['title'],
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 28,
-                                        fontWeight: FontWeight.bold,
-                                        shadows: [
-                                          Shadow(
-                                            blurRadius: 10,
-                                            color: Colors.black45,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      item['description'],
-                                      style: TextStyle(
-                                        color: Colors.white.withOpacity(0.9),
-                                        fontSize: 16,
-                                        shadows: const [
-                                          Shadow(
-                                            blurRadius: 10,
-                                            color: Colors.black45,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Quick Actions',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey[800],
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {},
+                        child: Text(
+                          'View All',
+                          style: TextStyle(
+                            color: const Color.fromARGB(255, 227, 175, 7),
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
-                    );
-                  },
+                    ],
+                  ),
                 ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // Quick Actions Title
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Quick Actions',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey[800],
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () {},
-                      child: Text(
-                        'View All',
-                        style: TextStyle(
-                          color: const Color.fromARGB(255, 227, 175, 7),
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Quick Action Icons
-              Expanded(
-                child: Padding(
+                Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: GridView.count(
+                    physics: const NeverScrollableScrollPhysics(),
+                    shrinkWrap: true,
                     crossAxisCount: 3,
                     crossAxisSpacing: 16,
                     mainAxisSpacing: 16,
                     children: [
                       _buildIcon(Icons.dashboard, 'Dashboard', Colors.blue),
-                      _buildIcon(Icons.car_rental, 'add car', Colors.orange),
-                      _buildIcon(Icons.people, 'Customers', Colors.green),
+                      _buildIcon(Icons.add_circle, 'Add Cars', Colors.orange),
+                      _buildIcon(Icons.directions_car, 'View Cars', Colors.green),
                       _buildIcon(Icons.receipt, 'Orders', Colors.teal),
-                      _buildIcon(Icons.chat, 'Manage users', Colors.purple),
+                      _buildIcon(Icons.manage_accounts, 'Manage user', Colors.purple),
                       _buildIcon(Icons.settings, 'Settings', Colors.red),
                     ],
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -254,7 +238,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
           DrawerHeader(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [const Color.fromARGB(255, 231, 163, 4)!, const Color.fromARGB(255, 242, 179, 6)!],
+                colors: [
+                  const Color.fromARGB(255, 231, 163, 4)!,
+                  const Color.fromARGB(255, 242, 179, 6)!
+                ],
               ),
             ),
             child: const Column(
@@ -265,27 +252,16 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   backgroundImage: AssetImage('image/profile.jpg'),
                 ),
                 SizedBox(height: 10),
-                Text(
-                  'Admin Panel',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                  ),
-                ),
-                Text(
-                  'admin@example.com',
-                  style: TextStyle(
-                    color: Colors.white70,
-                  ),
-                ),
+                Text('Admin Panel', style: TextStyle(color: Colors.white, fontSize: 20)),
+                Text('admin@example.com', style: TextStyle(color: Colors.white70)),
               ],
             ),
           ),
           _buildDrawerItem(Icons.dashboard, 'Dashboard'),
-          _buildDrawerItem(Icons.car_rental, 'add car'),
-          _buildDrawerItem(Icons.people, 'Customers'),
+          _buildDrawerItem(Icons.add_circle, 'Add Cars'),
+          _buildDrawerItem(Icons.directions_car, 'View Cars'),
           _buildDrawerItem(Icons.receipt, 'Orders'),
-          _buildDrawerItem(Icons.chat, 'Manage users'),
+          _buildDrawerItem(Icons.manage_accounts, 'Manage users'),
           _buildDrawerItem(Icons.settings, 'Settings'),
           const Divider(),
           _buildDrawerItem(Icons.logout, 'Logout'),
@@ -299,8 +275,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
       leading: Icon(icon, color: Colors.blue[800]),
       title: Text(title),
       onTap: () {
-        Navigator.of(context).pop(); // ✅ Close drawer
-        // You can also navigate here if needed
+        Navigator.of(context).pop();
       },
     );
   }
@@ -308,9 +283,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   Widget _buildIcon(IconData icon, String label, Color color) {
     return Card(
       elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () {},
