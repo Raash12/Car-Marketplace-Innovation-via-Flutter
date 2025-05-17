@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class AddCarPage extends StatefulWidget {
   const AddCarPage({super.key});
@@ -21,8 +22,9 @@ class _AddCarPageState extends State<AddCarPage> {
 
   String _fuelType = 'Petrol';
   File? _image;
-
   final ImagePicker picker = ImagePicker();
+
+  final String imgbbApiKey = '409164d54cc9cb69bc6e0c8910d9f487';
 
   Future<void> _pickImage() async {
     try {
@@ -46,24 +48,32 @@ class _AddCarPageState extends State<AddCarPage> {
     }
   }
 
+  Future<String?> uploadImageToImgBB(File imageFile) async {
+    try {
+      final base64Image = base64Encode(await imageFile.readAsBytes());
+      final response = await http.post(
+        Uri.parse("https://api.imgbb.com/1/upload?key=$imgbbApiKey"),
+        body: {"image": base64Image},
+      );
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        return responseData["data"]["url"];
+      } else {
+        return null;
+      }
+    } catch (e) {
+      return null;
+    }
+  }
+
   Future<void> _addCarToFirestore() async {
     if (_formKey.currentState!.validate() && _image != null) {
       try {
-        // Check if image file really exists
-        if (!await _image!.exists()) {
-          throw Exception("Image file doesn't exist. Try selecting again.");
+        final imageUrl = await uploadImageToImgBB(_image!);
+        if (imageUrl == null) {
+          throw Exception("Failed to upload image to ImgBB");
         }
 
-        // Upload image to Firebase Storage
-        final storageRef = FirebaseStorage.instance
-            .ref()
-            .child('car_images/${DateTime.now().millisecondsSinceEpoch}.jpg');
-
-        final uploadTask = storageRef.putFile(_image!);
-        final TaskSnapshot snapshot = await uploadTask;
-        final imageUrl = await snapshot.ref.getDownloadURL();
-
-        // Save car data with imageUrl in Firestore
         await FirebaseFirestore.instance.collection('carlist').add({
           'name': _nameController.text.trim(),
           'price': _priceController.text.trim(),
