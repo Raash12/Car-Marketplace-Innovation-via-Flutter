@@ -28,7 +28,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           MaterialPageRoute(builder: (_) =>  LoginScreen()),
         );
       } on FirebaseAuthException catch (e) {
-        String message = "An error occurred";
+        String message = "An error occurred" ;
         if (e.code == 'email-already-in-use') {
           message = 'This email is already in use.';
         } else if (e.code == 'invalid-email') {

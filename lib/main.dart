@@ -27,7 +27,12 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
+<<<<<<< HEAD
       home: const AddCarPage(),       
+=======
+      home: const ViewCarPage(), // Change to AdminDashboard() or ViewCarPage() as needed
+       
+>>>>>>> 5a10e8c5d7819687c41c802268ee895b9600897b
     );
   }
 }
