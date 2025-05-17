@@ -16,6 +16,8 @@ class _AddCarPageState extends State<AddCarPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
+  final TextEditingController _rentPriceController = TextEditingController();  // New controller
+  final TextEditingController _buyPriceController = TextEditingController();   // New controller
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _quantityController = TextEditingController();
   final TextEditingController _mileageController = TextEditingController();
@@ -77,6 +79,8 @@ class _AddCarPageState extends State<AddCarPage> {
         await FirebaseFirestore.instance.collection('carlist').add({
           'name': _nameController.text.trim(),
           'price': _priceController.text.trim(),
+          'buyPrice': _buyPriceController.text.trim(),  // Save buy price
+          'rentPrice': _rentPriceController.text.trim(), // Save rent price
           'description': _descriptionController.text.trim(),
           'quantity': int.parse(_quantityController.text.trim()),
           'specifications': {
@@ -128,6 +132,20 @@ class _AddCarPageState extends State<AddCarPage> {
                 decoration: const InputDecoration(labelText: 'Price'),
                 keyboardType: TextInputType.number,
                 validator: (value) => value!.isEmpty ? 'Enter price' : null,
+              ),
+              // New buy price field
+              TextFormField(
+                controller: _buyPriceController,
+                decoration: const InputDecoration(labelText: 'Buy Price'),
+                keyboardType: TextInputType.number,
+                validator: (value) => value!.isEmpty ? 'Enter buy price' : null,
+              ),
+              // New rent price field
+              TextFormField(
+                controller: _rentPriceController,
+                decoration: const InputDecoration(labelText: 'Rent Price'),
+                keyboardType: TextInputType.number,
+                validator: (value) => value!.isEmpty ? 'Enter rent price' : null,
               ),
               TextFormField(
                 controller: _descriptionController,
