@@ -2,6 +2,7 @@ import 'package:carmarketplace/screens/ViewDetailPage.dart' show ViewDetailPage;
 import 'package:carmarketplace/screens/addcar.dart' show AddCarPage;
 import 'package:carmarketplace/screens/cartmanager.dart' show CartManager;
 import 'package:carmarketplace/screens/cartpage.dart' show CartPage;
+import 'package:carmarketplace/screens/rentalbookingpage.dart' show RentalBookingPage; // Import RentalBookingPage
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -41,7 +42,9 @@ class ViewCarPage extends StatelessWidget {
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance.collection('carlist').snapshots(),
         builder: (context, snapshot) {
-          if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+          if (!snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
           final cars = snapshot.data!.docs;
 
@@ -66,6 +69,7 @@ class ViewCarPage extends StatelessWidget {
                   ],
                 ),
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.circular(12),
@@ -74,6 +78,8 @@ class ViewCarPage extends StatelessWidget {
                         width: 100,
                         height: 100,
                         fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                            const Icon(Icons.image_not_supported, size: 100),
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -81,35 +87,48 @@ class ViewCarPage extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(car['name'] ?? '',
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                          Text('Buy Price: \$${car['buyPrice'] ?? ''}',
-                              style: const TextStyle(color: Colors.black87)),
-                          Text('Rent Price: \$${car['rentPrice'] ?? ''}',
-                              style: const TextStyle(color: Colors.black54)),
-                          Text('Fuel: ${specs['fuelType'] ?? 'N/A'}',
-                              style: const TextStyle(color: Colors.grey)),
-                          const SizedBox(height: 8),
-                          Row(
+                          Text(
+                            car['name'] ?? '',
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 18),
+                          ),
+                          Text(
+                            'Buy Price: \$${car['buyPrice'] ?? ''}',
+                            style: const TextStyle(color: Colors.black87),
+                          ),
+                          Text(
+                            'Rent Price: \$${car['rentPrice'] ?? ''}',
+                            style: const TextStyle(color: Colors.black54),
+                          ),
+                          Text(
+                            'Fuel: ${specs['fuelType'] ?? 'N/A'}',
+                            style: const TextStyle(color: Colors.grey),
+                          ),
+                          const SizedBox(height: 10),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
                             children: [
                               ElevatedButton(
                                 onPressed: () {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                        builder: (context) =>
-                                            ViewDetailPage(carData: car)),
+                                      builder: (context) =>
+                                          ViewDetailPage(carData: car),
+                                    ),
                                   );
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.deepOrange,
                                   foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 8),
+                                  textStyle: const TextStyle(fontSize: 12),
+                                  minimumSize: const Size(0, 32),
                                 ),
                                 child: const Text('Details'),
                               ),
-                              const SizedBox(width: 10),
-
-                              // Your two buttons below:
                               ElevatedButton(
                                 onPressed: () {
                                   CartManager().addToCart({
@@ -119,36 +138,43 @@ class ViewCarPage extends StatelessWidget {
                                     'quantity': 1,
                                   });
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('${car['name']} added to cart for Buy')),
+                                    SnackBar(
+                                        content: Text(
+                                            '${car['name']} added to cart for Buy')),
                                   );
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.green,
                                   foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 8),
+                                  textStyle: const TextStyle(fontSize: 12),
+                                  minimumSize: const Size(0, 32),
                                 ),
                                 child: const Text('Buy Now'),
                               ),
-                              const SizedBox(width: 10),
                               ElevatedButton(
                                 onPressed: () {
-                                  CartManager().addToCart({
-                                    ...car,
-                                    'selectedPrice': car['rentPrice'],
-                                    'priceType': 'rent',
-                                    'quantity': 1,
-                                  });
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('${car['name']} added to cart for Rent')),
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          RentalBookingPage(carData: car),
+                                    ),
                                   );
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.orange,
                                   foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 8),
+                                  textStyle: const TextStyle(fontSize: 12),
+                                  minimumSize: const Size(0, 32),
                                 ),
                                 child: const Text('Rent'),
                               ),
                             ],
-                          )
+                          ),
                         ],
                       ),
                     ),

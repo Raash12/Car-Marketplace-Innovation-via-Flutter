@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:carmarketplace/screens/RentalBookingPage.dart'; /// Make sure this import path is correct
 
 class ViewDetailPage extends StatelessWidget {
   final Map<String, dynamic> carData;
@@ -17,17 +18,20 @@ class ViewDetailPage extends StatelessWidget {
           SliverAppBar(
             expandedHeight: 320,
             pinned: true,
-            backgroundColor: Colors.deepPurple,
+            backgroundColor: Colors.deepOrange,
             flexibleSpace: FlexibleSpaceBar(
               title: Text(
                 carData['name'] ?? '',
-                style: const TextStyle(fontSize: 18, shadows: [
-                  Shadow(
-                    color: Colors.black54,
-                    blurRadius: 2,
-                    offset: Offset(1, 1),
-                  )
-                ]),
+                style: const TextStyle(
+                  fontSize: 18,
+                  shadows: [
+                    Shadow(
+                      color: Colors.black54,
+                      blurRadius: 2,
+                      offset: Offset(1, 1),
+                    )
+                  ],
+                ),
               ),
               background: Image.network(
                 carData['imageUrl'] ?? '',
@@ -50,7 +54,7 @@ class ViewDetailPage extends StatelessWidget {
                   Text(
                     '\$${carData['price'] ?? 'N/A'}',
                     style: const TextStyle(
-                      fontSize: 24,
+                      fontSize: 26,
                       fontWeight: FontWeight.bold,
                       color: Colors.deepOrange,
                     ),
@@ -67,29 +71,56 @@ class ViewDetailPage extends StatelessWidget {
                   const SizedBox(height: 30),
                   const Text(
                     'Description',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.deepPurple,
+                    ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   Text(
                     carData['description'] ?? 'No description available.',
-                    style: const TextStyle(fontSize: 16, color: Colors.black87),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Colors.black87,
+                      height: 1.5,
+                    ),
                   ),
                   const SizedBox(height: 30),
-                 ElevatedButton.icon(
-  onPressed: () => Navigator.pop(context),
-  style: ElevatedButton.styleFrom(
-    backgroundColor: Colors.orange, // changed from black to orange
-    padding: const EdgeInsets.symmetric(vertical: 14),
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(16),
-    ),
-  ),
-  icon: const Icon(Icons.arrow_back, color: Colors.white), // icon color
-  label: const Text(
-    'Back to Cars',
-    style: TextStyle(fontSize: 18, color: Colors.white), // text color
-  ),
-),
+
+                  // Rent Now Button
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => RentalBookingPage(
+                            carData: {
+                              'id': carData['id'] ?? '',
+                              'name': carData['name'] ?? '',
+                              'price': carData['price'] ?? '',
+                            },
+                          ),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.deepPurple,
+                      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    icon: const Icon(Icons.directions_car, color: Colors.white),
+                    label: const Text(
+                      'Rent Now',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
 
                   const SizedBox(height: 40),
                 ],
@@ -105,11 +136,18 @@ class ViewDetailPage extends StatelessWidget {
     return Expanded(
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 6),
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: Colors.grey[100],
+          color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.deepPurple.shade100),
+          border: Border.all(color: Colors.deepOrange.shade100),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.deepOrange.withOpacity(0.05),
+              blurRadius: 6,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           children: [
@@ -121,13 +159,13 @@ class ViewDetailPage extends StatelessWidget {
                 fontWeight: FontWeight.w500,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 6),
             Text(
               value,
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: Color.fromARGB(221, 243, 8, 8),
+                color: Colors.deepOrange,
               ),
             ),
           ],
