@@ -27,7 +27,6 @@ class _RentalBookingPageState extends State<RentalBookingPage> {
   }
 
   double _parsePrice(dynamic price) {
-    // Safely parse rentPrice whether it's int, double or string
     if (price == null) return 0.0;
     if (price is double) return price;
     if (price is int) return price.toDouble();
@@ -100,7 +99,7 @@ class _RentalBookingPageState extends State<RentalBookingPage> {
   Future<void> _pickDate(BuildContext context, bool isStart) async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
+      initialDate: isStart ? (_startDate ?? DateTime.now()) : (_endDate ?? (_startDate ?? DateTime.now())),
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365)),
     );
@@ -108,7 +107,9 @@ class _RentalBookingPageState extends State<RentalBookingPage> {
       setState(() {
         if (isStart) {
           _startDate = picked;
-          _endDate = null; // reset end date if start date changes
+          if (_endDate != null && _endDate!.isBefore(_startDate!)) {
+            _endDate = null; // reset end date if invalid
+          }
         } else {
           _endDate = picked;
         }
@@ -120,85 +121,165 @@ class _RentalBookingPageState extends State<RentalBookingPage> {
   @override
   Widget build(BuildContext context) {
     final pricePerDay = _parsePrice(widget.carData['rentPrice']);
+
     return Scaffold(
-      appBar: AppBar(title: const Text("Book Rental")),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
+      appBar: AppBar(
+        title: const Text("Book Rental"),
+        backgroundColor: Colors.deepPurple,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
         child: Form(
           key: _formKey,
-          child: ListView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Car: ${widget.carData['name']} (\$${pricePerDay.toStringAsFixed(2)}/day)',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                'Car: ${widget.carData['name']}',
+                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Your Name',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) =>
-                    value == null || value.isEmpty ? 'Enter your name' : null,
+              const SizedBox(height: 4),
+              Text(
+                'Price per day: \$${pricePerDay.toStringAsFixed(2)}',
+                style: TextStyle(fontSize: 16, color: Colors.grey[700]),
               ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _contactController,
-                keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(
-                  labelText: 'Contact Number',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) =>
-                    value == null || value.isEmpty ? 'Enter contact number' : null,
-              ),
-              const SizedBox(height: 16),
-              ListTile(
-                title: Text(
-                  _startDate == null
-                      ? 'Select Start Date'
-                      : 'Start Date: ${DateFormat('yyyy-MM-dd').format(_startDate!)}',
-                ),
-                trailing: const Icon(Icons.calendar_today),
-                onTap: () => _pickDate(context, true),
-              ),
-              ListTile(
-                title: Text(
-                  _endDate == null
-                      ? 'Select End Date'
-                      : 'End Date: ${DateFormat('yyyy-MM-dd').format(_endDate!)}',
-                ),
-                trailing: const Icon(Icons.calendar_today),
-                onTap: () => _pickDate(context, false),
-              ),
-              if (_totalPrice != null) ...[
-                const SizedBox(height: 12),
-                Text(
-                  'Price Per Day: \$${pricePerDay.toStringAsFixed(2)}',
-                  style: const TextStyle(fontSize: 16),
-                ),
-                if (_startDate != null && _endDate != null) ...[
-                  Text(
-                    'Total Days: ${_endDate!.difference(_startDate!).inDays + 1}',
-                    style: const TextStyle(fontSize: 16),
+              const SizedBox(height: 24),
+
+              Card(
+                elevation: 3,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      // Name field
+                      TextFormField(
+                        controller: _nameController,
+                        decoration: const InputDecoration(
+                          labelText: 'Your Name',
+                          prefixIcon: Icon(Icons.person),
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (value) =>
+                            value == null || value.isEmpty ? 'Enter your name' : null,
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Contact field
+                      TextFormField(
+                        controller: _contactController,
+                        keyboardType: TextInputType.phone,
+                        decoration: const InputDecoration(
+                          labelText: 'Contact Number',
+                          prefixIcon: Icon(Icons.phone),
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (value) =>
+                            value == null || value.isEmpty ? 'Enter contact number' : null,
+                      ),
+                    ],
                   ),
-                ],
-                const SizedBox(height: 4),
-                Text(
-                  'Total Price: \$${_totalPrice!.toStringAsFixed(2)}',
-                  style: const TextStyle(fontSize: 18, color: Colors.green, fontWeight: FontWeight.bold),
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              // Date pickers inside card
+              Card(
+                elevation: 3,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+                  child: Column(
+                    children: [
+                      OutlinedButton.icon(
+                        icon: const Icon(Icons.calendar_today),
+                        label: Text(
+                          _startDate == null
+                              ? 'Select Start Date'
+                              : 'Start Date: ${DateFormat('yyyy-MM-dd').format(_startDate!)}',
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                        onPressed: () => _pickDate(context, true),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(48),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      OutlinedButton.icon(
+                        icon: const Icon(Icons.calendar_today),
+                        label: Text(
+                          _endDate == null
+                              ? 'Select End Date'
+                              : 'End Date: ${DateFormat('yyyy-MM-dd').format(_endDate!)}',
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                        onPressed: _startDate == null ? null : () => _pickDate(context, false),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(48),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              if (_totalPrice != null) ...[
+                const SizedBox(height: 24),
+                Card(
+                  color: Colors.green[50],
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Price Per Day: \$${pricePerDay.toStringAsFixed(2)}',
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                        if (_startDate != null && _endDate != null) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            'Total Days: ${_endDate!.difference(_startDate!).inDays + 1}',
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                        ],
+                        const SizedBox(height: 8),
+                        Text(
+                          'Total Price: \$${_totalPrice!.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ],
-              const SizedBox(height: 24),
-              ElevatedButton.icon(
-                onPressed: _submitBooking,
-                icon: const Icon(Icons.send),
-                label: const Text('Submit Rental'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: Colors.deepPurple,
-                  textStyle: const TextStyle(fontSize: 16),
+
+              const SizedBox(height: 32),
+
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton.icon(
+                  onPressed: _submitBooking,
+                  icon: const Icon(Icons.send),
+                  label: const Text(
+                    'Submit Rental',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.deepPurple,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 5,
+                  ),
                 ),
               ),
             ],
