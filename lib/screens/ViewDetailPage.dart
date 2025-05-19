@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:carmarketplace/screens/RentalBookingPage.dart';
+import 'package:carmarketplace/screens/RentalPage.dart';
 
 class ViewDetailPage extends StatelessWidget {
   final Map<String, dynamic> carData;
@@ -157,7 +157,7 @@ class ViewDetailPage extends StatelessWidget {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => RentalBookingPage(
+                                builder: (context) => RentalPage(
                                   carData: {
                                     'id': carData['id'] ?? '',
                                     'name': carData['name'] ?? '',
