@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter/services.dart';
 
 class AddCarPage extends StatefulWidget {
   const AddCarPage({super.key});
@@ -87,8 +88,8 @@ class _AddCarPageState extends State<AddCarPage> {
 
         await FirebaseFirestore.instance.collection('carlist').add({
           'name': _nameController.text.trim(),
-          'buyPrice': _buyPriceController.text.trim(),
-          'rentPrice': _rentPriceController.text.trim(),
+          'buyPrice': double.parse(_buyPriceController.text.trim()),
+          'rentPrice': double.parse(_rentPriceController.text.trim()),
           'description': _descriptionController.text.trim(),
           'quantity': int.parse(_quantityController.text.trim()),
           'specifications': {
@@ -100,8 +101,8 @@ class _AddCarPageState extends State<AddCarPage> {
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Car added successfully'),
+          const SnackBar(
+            content: Text('Car added successfully'),
             backgroundColor: Colors.green,
           ),
         );
@@ -122,8 +123,8 @@ class _AddCarPageState extends State<AddCarPage> {
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Please complete all fields and select an image.'),
+        const SnackBar(
+          content: Text('Please complete all fields and select an image.'),
           backgroundColor: Colors.deepPurple,
         ),
       );
@@ -174,17 +175,37 @@ class _AddCarPageState extends State<AddCarPage> {
                 decoration: _inputDecoration('Car Name'),
                 validator: (value) => value!.isEmpty ? 'Enter car name' : null,
               ),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _buyPriceController,
                 decoration: _inputDecoration('Buy Price'),
-                keyboardType: TextInputType.number,
-                validator: (value) => value!.isEmpty ? 'Enter buy price' : null,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+                ],
+                validator: (value) {
+                  if (value == null || value.isEmpty) return 'Enter buy price';
+                  final n = num.tryParse(value);
+                  if (n == null) return 'Enter a valid number';
+                  if (n <= 0) return 'Price must be greater than zero';
+                  return null;
+                },
               ),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _rentPriceController,
                 decoration: _inputDecoration('Rent Price'),
-                keyboardType: TextInputType.number,
-                validator: (value) => value!.isEmpty ? 'Enter rent price' : null,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+                ],
+                validator: (value) {
+                  if (value == null || value.isEmpty) return 'Enter rent price';
+                  final n = num.tryParse(value);
+                  if (n == null) return 'Enter a valid number';
+                  if (n <= 0) return 'Price must be greater than zero';
+                  return null;
+                },
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -198,8 +219,16 @@ class _AddCarPageState extends State<AddCarPage> {
                 controller: _quantityController,
                 decoration: _inputDecoration('Quantity'),
                 keyboardType: TextInputType.number,
-                validator: (value) => value!.isEmpty ? 'Enter quantity' : null,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                validator: (value) {
+                  if (value == null || value.isEmpty) return 'Enter quantity';
+                  final n = int.tryParse(value);
+                  if (n == null) return 'Enter a valid number';
+                  if (n <= 0) return 'Quantity must be greater than zero';
+                  return null;
+                },
               ),
+              const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 decoration: const InputDecoration(labelText: 'Mileage'),
                 value: _selectedMileage,
