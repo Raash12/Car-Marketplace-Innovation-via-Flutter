@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 
-class RentalBookingPage extends StatefulWidget {
+class RentalPage extends StatefulWidget {
   final Map<String, dynamic> carData;
 
-  const RentalBookingPage({super.key, required this.carData});
+  const RentalPage({super.key, required this.carData});
 
   @override
-  State<RentalBookingPage> createState() => _RentalBookingPageState();
+  State<RentalPage> createState() => _RentalPageState();
 }
 
-class _RentalBookingPageState extends State<RentalBookingPage> {
+class _RentalPageState extends State<RentalPage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _contactController = TextEditingController();
@@ -71,7 +71,7 @@ class _RentalBookingPageState extends State<RentalBookingPage> {
       final double totalPrice = pricePerDay * rentalDays;
 
       try {
-        await FirebaseFirestore.instance.collection('rentalBookings').add({
+        await FirebaseFirestore.instance.collection('rental').add({
           'carName': widget.carData['name'],
           'rentPrice': pricePerDay,
           'totalPrice': totalPrice,

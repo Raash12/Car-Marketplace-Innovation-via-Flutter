@@ -1,51 +1,55 @@
+import 'package:carmarketplace/screens/Buy.dart';
+import 'package:carmarketplace/screens/RentalPage.dart';
 import 'package:carmarketplace/screens/ViewDetailPage.dart';
-import 'package:carmarketplace/screens/addcar.dart';
-import 'package:carmarketplace/screens/editcar.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class ViewCarPage extends StatefulWidget {
-  const ViewCarPage({super.key});
+class ViewUserCarPage extends StatefulWidget {
+  const ViewUserCarPage({super.key});
 
   @override
-  State<ViewCarPage> createState() => _ViewCarPageState();
+  State<ViewUserCarPage> createState() => _ViewUserCarPageState();
 }
 
-class _ViewCarPageState extends State<ViewCarPage> {
-  Future<void> _deleteCar(String docId) async {
-    try {
-      await FirebaseFirestore.instance.collection('carlist').doc(docId).delete();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Car deleted successfully')),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to delete car: $e')),
-      );
-    }
-  }
+class _ViewUserCarPageState extends State<ViewUserCarPage> {
+  String _searchQuery = '';
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF8F0), // soft light orange bg
+      backgroundColor: const Color(0xFFFFF8F0),
       appBar: AppBar(
         title: const Text('Available Cars'),
         backgroundColor: Colors.deepPurple,
         foregroundColor: Colors.white,
         elevation: 4,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add_circle_outline),
-            tooltip: 'Add Car',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const AddCarPage()),
-              );
-            },
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(56),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: TextField(
+              style: const TextStyle(color: Colors.white),
+              cursorColor: Colors.white,
+              decoration: InputDecoration(
+                hintText: 'Search by name, fuel, etc...',
+                hintStyle: TextStyle(color: Colors.white70),
+                prefixIcon: const Icon(Icons.search, color: Colors.white),
+                filled: true,
+                fillColor: Colors.deepPurple.withOpacity(0.5),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(vertical: 0),
+              ),
+              onChanged: (value) {
+                setState(() {
+                  _searchQuery = value.trim().toLowerCase();
+                });
+              },
+            ),
           ),
-        ],
+        ),
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance.collection('carlist').snapshots(),
@@ -56,12 +60,29 @@ class _ViewCarPageState extends State<ViewCarPage> {
             );
           }
 
+          // Get all cars from Firestore
           final cars = snapshot.data!.docs;
 
-          if (cars.isEmpty) {
+          // Filter cars based on search query
+          final filteredCars = cars.where((doc) {
+            final car = doc.data() as Map<String, dynamic>;
+            final specs = car['specifications'] ?? {};
+            final name = (car['name'] ?? '').toString().toLowerCase();
+            final fuelType = (specs['fuelType'] ?? '').toString().toLowerCase();
+            final buyPrice = (car['buyPrice'] ?? '').toString().toLowerCase();
+            final rentPrice = (car['rentPrice'] ?? '').toString().toLowerCase();
+
+            // Search in name, fuelType, buyPrice, rentPrice
+            return name.contains(_searchQuery) ||
+                fuelType.contains(_searchQuery) ||
+                buyPrice.contains(_searchQuery) ||
+                rentPrice.contains(_searchQuery);
+          }).toList();
+
+          if (filteredCars.isEmpty) {
             return Center(
               child: Text(
-                'No cars available right now 💔',
+                'No cars found matching "$_searchQuery" 😞',
                 style: TextStyle(
                   fontSize: 18,
                   color: Colors.deepPurple,
@@ -73,11 +94,10 @@ class _ViewCarPageState extends State<ViewCarPage> {
 
           return ListView.builder(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-            itemCount: cars.length,
+            itemCount: filteredCars.length,
             itemBuilder: (context, index) {
-              final doc = cars[index];
+              final doc = filteredCars[index];
               final car = doc.data() as Map<String, dynamic>;
-              final docId = doc.id;
               final specs = car['specifications'] ?? {};
 
               return Container(
@@ -144,52 +164,6 @@ class _ViewCarPageState extends State<ViewCarPage> {
                                   color: Colors.grey[700],
                                 ),
                               ),
-                              const SizedBox(height: 12),
-                              Row(
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.edit, color: Colors.deepPurple),
-                                    tooltip: 'Edit Car',
-                                    onPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => EditCarPage(
-                                            docId: docId,
-                                            carData: car,
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.delete, color: Colors.redAccent),
-                                    tooltip: 'Delete Car',
-                                    onPressed: () async {
-                                      final confirmed = await showDialog<bool>(
-                                        context: context,
-                                        builder: (context) => AlertDialog(
-                                          title: const Text('Delete Confirmation'),
-                                          content: Text('Are you sure you want to delete "${car['name']}"?'),
-                                          actions: [
-                                            TextButton(
-                                              onPressed: () => Navigator.pop(context, false),
-                                              child: const Text('Cancel'),
-                                            ),
-                                            TextButton(
-                                              onPressed: () => Navigator.pop(context, true),
-                                              child: const Text('Delete', style: TextStyle(color: Colors.red)),
-                                            ),
-                                          ],
-                                        ),
-                                      );
-                                      if (confirmed == true) {
-                                        _deleteCar(docId);
-                                      }
-                                    },
-                                  ),
-                                ],
-                              )
                             ],
                           ),
                         ),
@@ -212,6 +186,52 @@ class _ViewCarPageState extends State<ViewCarPage> {
                             label: const Text('Details'),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.deepPurple,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => BuyCarPage(carData: car),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.shopping_bag_outlined),
+                            label: const Text('Buy'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => RentalPage(carData: car),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.car_rental),
+                            label: const Text('Rent'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.deepPurple.withOpacity(0.7),
                               foregroundColor: Colors.white,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(14),

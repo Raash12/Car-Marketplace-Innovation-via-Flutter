@@ -1,13 +1,21 @@
+
+import 'package:carmarketplace/screens/viewcar_user.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:carmarketplace/screens/home_screen.dart';
+// Assume this is viewcar.dart
 import 'package:carmarketplace/screens/register_screen.dart';
+import 'package:carmarketplace/screens/admin_dashboard.dart';
+// <-- import ViewCarPage here
 
 class LoginScreen extends StatelessWidget {
   LoginScreen({super.key});
 
   final TextEditingController _emailcontroller = TextEditingController();
   final TextEditingController _passwordcontroller = TextEditingController();
+
+  // Hardcoded admin credentials
+  final String adminEmail = "admin@gmail.com";
+  final String adminPassword = "admin123";
 
   @override
   Widget build(BuildContext context) {
@@ -127,28 +135,34 @@ class LoginScreen extends StatelessWidget {
                       final email = _emailcontroller.text.trim();
                       final password = _passwordcontroller.text.trim();
 
-                      try {
-                        await FirebaseAuth.instance
-                            .signInWithEmailAndPassword(
-                                email: email, password: password);
+                      if (email == adminEmail && password == adminPassword) {
+                        // Admin login
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const AdminDashboard()),
+                        );
+                      } else {
+                        // Normal user login with Firebase
+                        try {
+                          await FirebaseAuth.instance
+                              .signInWithEmailAndPassword(
+                                  email: email, password: password);
 
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => const HomeScreen()),
-                        );
-                      } on FirebaseAuthException catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text("Login failed: ${e.message}"),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => const RegistrationScreen()),
-                        );
+                          // Navigate to the car listing page, not ViewUserPage directly
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const ViewUserCarPage()),
+                          );
+                        } on FirebaseAuthException catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text("Login failed: ${e.message}"),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
                       }
                     },
                     style: ElevatedButton.styleFrom(

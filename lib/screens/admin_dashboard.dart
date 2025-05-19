@@ -1,7 +1,6 @@
-import 'dart:io';
-
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:carmarketplace/screens/viewcar.dart';
+import 'package:carmarketplace/screens/addcar.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -11,7 +10,23 @@ class AdminDashboard extends StatefulWidget {
 }
 
 class _AdminDashboardState extends State<AdminDashboard> {
-  List<String> imagePaths = [];
+  List<String> imagePaths = [
+    'image/car0.jpg',
+    'image/car00.jpg',
+    'image/car000.jpg',
+  ];
+
+  final List<String> titles = [
+    'Luxury Ride',
+    'Performance Beast',
+    'Eco-Friendly Drive',
+  ];
+
+  final List<String> descriptions = [
+    'Experience unmatched comfort and class.',
+    'Power and speed blended with style.',
+    'Go green without compromising performance.',
+  ];
 
   late final PageController _pageController;
   int _currentPage = 0;
@@ -42,23 +57,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
     });
   }
 
-  Future<void> pickImage() async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles(
-      type: FileType.image,
-    );
-
-    if (result != null) {
-      String? filePath = result.files.single.path;
-      if (filePath != null) {
-        setState(() {
-          imagePaths.add(filePath);
-          _currentPage = imagePaths.length - 1;
-          _pageController.jumpToPage(_currentPage);
-        });
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -77,13 +75,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
             },
           ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add_photo_alternate_outlined),
-            onPressed: pickImage,
-            tooltip: 'Pick image from PC',
-          )
-        ],
       ),
       body: Stack(
         children: [
@@ -104,12 +95,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   child: imagePaths.isEmpty
                       ? Center(
                           child: Text(
-                            'No images selected.\nTap the + button to pick images.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 18,
-                              color: Colors.grey[700],
-                            ),
+                            'No images available.',
+                            style: TextStyle(fontSize: 18, color: Colors.grey[700]),
                           ),
                         )
                       : PageView.builder(
@@ -139,7 +126,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                   child: Stack(
                                     fit: StackFit.expand,
                                     children: [
-                                      Image.file(File(imagePath), fit: BoxFit.cover),
+                                      Image.asset(imagePath, fit: BoxFit.cover),
                                       Container(
                                         decoration: BoxDecoration(
                                           gradient: LinearGradient(
@@ -154,25 +141,26 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                       ),
                                       Positioned(
                                         left: 20,
-                                        bottom: 40,
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              'Selected Image ${index + 1}',
-                                              style: const TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 28,
-                                                fontWeight: FontWeight.bold,
-                                                shadows: [
-                                                  Shadow(
-                                                    blurRadius: 10,
-                                                    color: Colors.black45,
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ],
+                                        bottom: 60,
+                                        child: Text(
+                                          titles[index],
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 26,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                      Positioned(
+                                        left: 20,
+                                        bottom: 30,
+                                        right: 20,
+                                        child: Text(
+                                          descriptions[index],
+                                          style: const TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 16,
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -219,12 +207,16 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     crossAxisSpacing: 16,
                     mainAxisSpacing: 16,
                     children: [
-                      _buildIcon(Icons.dashboard, 'Dashboard', Colors.blue),
-                      _buildIcon(Icons.add_circle, 'Add Cars', Colors.orange),
-                      _buildIcon(Icons.directions_car, 'View Cars', Colors.green),
-                      _buildIcon(Icons.receipt, 'Orders', Colors.teal),
-                      _buildIcon(Icons.manage_accounts, 'Manage user', Colors.purple),
-                      _buildIcon(Icons.settings, 'Settings', Colors.red),
+                      _buildIcon(Icons.dashboard, 'Dashboard', Colors.blue, () {}),
+                      _buildIcon(Icons.add_circle, 'Add Cars', Colors.orange, () {
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => const AddCarPage()));
+                      }),
+                      _buildIcon(Icons.directions_car, 'View Cars', Colors.green, () {
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => const ViewCarPage()));
+                      }),
+                      _buildIcon(Icons.receipt, 'Orders', Colors.teal, () {}),
+                      _buildIcon(Icons.manage_accounts, 'Manage user', Colors.purple, () {}),
+                      _buildIcon(Icons.settings, 'Settings', Colors.red, () {}),
                     ],
                   ),
                 ),
@@ -263,36 +255,41 @@ class _AdminDashboardState extends State<AdminDashboard> {
               ],
             ),
           ),
-          _buildDrawerItem(Icons.dashboard, 'Dashboard'),
-          _buildDrawerItem(Icons.add_circle, 'Add Cars'),
-          _buildDrawerItem(Icons.directions_car, 'View Cars'),
-          _buildDrawerItem(Icons.receipt, 'Orders'),
-          _buildDrawerItem(Icons.manage_accounts, 'Manage users'),
-          _buildDrawerItem(Icons.settings, 'Settings'),
+          _buildDrawerItem(Icons.dashboard, 'Dashboard', () {}),
+          _buildDrawerItem(Icons.add_circle, 'Add Cars', () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const AddCarPage()));
+          }),
+          _buildDrawerItem(Icons.directions_car, 'View Cars', () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const ViewCarPage()));
+          }),
+          _buildDrawerItem(Icons.receipt, 'Orders', () {}),
+          _buildDrawerItem(Icons.manage_accounts, 'Manage users', () {}),
+          _buildDrawerItem(Icons.settings, 'Settings', () {}),
           const Divider(),
-          _buildDrawerItem(Icons.logout, 'Logout'),
+          _buildDrawerItem(Icons.logout, 'Logout', () {}),
         ],
       ),
     );
   }
 
-  Widget _buildDrawerItem(IconData icon, String title) {
+  Widget _buildDrawerItem(IconData icon, String title, VoidCallback onTap) {
     return ListTile(
       leading: Icon(icon, color: Colors.blue[800]),
       title: Text(title),
       onTap: () {
         Navigator.of(context).pop();
+        onTap();
       },
     );
   }
 
-  Widget _buildIcon(IconData icon, String label, Color color) {
+  Widget _buildIcon(IconData icon, String label, Color color, VoidCallback onTap) {
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () {},
+        onTap: onTap,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
