@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:carmarketplace/screens/RentalBookingPage.dart'; /// Make sure this import path is correct
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:carmarketplace/screens/RentalBookingPage.dart';
 
 class ViewDetailPage extends StatelessWidget {
   final Map<String, dynamic> carData;
@@ -14,11 +16,11 @@ class ViewDetailPage extends StatelessWidget {
       backgroundColor: const Color(0xFFFAF7F0),
       body: CustomScrollView(
         slivers: [
-          // Sliver App Bar with car image
+          // Car image with SliverAppBar
           SliverAppBar(
             expandedHeight: 320,
             pinned: true,
-            backgroundColor: Colors.deepOrange,
+            backgroundColor: Colors.deepPurple,
             flexibleSpace: FlexibleSpaceBar(
               title: Text(
                 carData['name'] ?? '',
@@ -44,7 +46,7 @@ class ViewDetailPage extends StatelessWidget {
             ),
           ),
 
-          // Sliver Body
+          // Details Section
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(24),
@@ -56,10 +58,11 @@ class ViewDetailPage extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.bold,
-                      color: Colors.deepOrange,
+                      color: Colors.deepPurple,
                     ),
                   ),
                   const SizedBox(height: 20),
+
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -68,6 +71,7 @@ class ViewDetailPage extends StatelessWidget {
                       _buildInfoBox('Fuel', specs['fuelType'] ?? 'N/A'),
                     ],
                   ),
+
                   const SizedBox(height: 30),
                   const Text(
                     'Description',
@@ -80,53 +84,112 @@ class ViewDetailPage extends StatelessWidget {
                   const SizedBox(height: 10),
                   Text(
                     carData['description'] ?? 'No description available.',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
-                      color: Colors.black87,
+                      color: Colors.grey[700],
                       height: 1.5,
                     ),
                   ),
                   const SizedBox(height: 30),
 
-                  // Rent Now Button
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => RentalBookingPage(
-                            carData: {
-                              'id': carData['id'] ?? '',
-                              'name': carData['name'] ?? '',
-                              'price': carData['price'] ?? '',
-                            },
+                  // Buttons
+                  Row(
+                    children: [
+                      // Buy Button
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () async {
+                            final user = FirebaseAuth.instance.currentUser;
+                            if (user == null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text("Please log in to add items to cart")),
+                              );
+                              return;
+                            }
+
+                            try {
+                              await FirebaseFirestore.instance
+                                  .collection('users')
+                                  .doc(user.uid)
+                                  .collection('cart')
+                                  .add({
+                                'carId': carData['id'],
+                                'name': carData['name'],
+                                'price': carData['price'],
+                                'imageUrl': carData['imageUrl'],
+                                'quantity': 1,
+                                'priceType': 'buy',
+                                'selectedPrice': carData['price'],
+                                'timestamp': FieldValue.serverTimestamp(),
+                              });
+
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text("Car added to cart")),
+                              );
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text("Failed to add to cart: $e")),
+                              );
+                            }
+                          },
+                          icon: const Icon(Icons.shopping_cart),
+                          label: const Text("Buy"),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            textStyle: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.deepPurple,
-                      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
                       ),
-                    ),
-                    icon: const Icon(Icons.directions_car, color: Colors.white),
-                    label: const Text(
-                      'Rent Now',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
+
+                      const SizedBox(width: 16),
+
+                      // Rent Button
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => RentalBookingPage(
+                                  carData: {
+                                    'id': carData['id'] ?? '',
+                                    'name': carData['name'] ?? '',
+                                    'price': carData['price'] ?? '',
+                                  },
+                                ),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.directions_car),
+                          label: const Text("Rent Now"),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.deepPurple,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            textStyle: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
 
                   const SizedBox(height: 40),
                 ],
               ),
             ),
-          )
+          ),
         ],
       ),
     );
@@ -140,10 +203,10 @@ class ViewDetailPage extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.deepOrange.shade100),
+          border: Border.all(color: Colors.deepPurple.shade100),
           boxShadow: [
             BoxShadow(
-              color: Colors.deepOrange.withOpacity(0.05),
+              color: Colors.deepPurple.withOpacity(0.05),
               blurRadius: 6,
               offset: const Offset(0, 4),
             ),
@@ -165,7 +228,7 @@ class ViewDetailPage extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: Colors.deepOrange,
+                color: Colors.deepPurple,
               ),
             ),
           ],

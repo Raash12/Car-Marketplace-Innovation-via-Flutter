@@ -167,13 +167,6 @@ class _AddCarPageState extends State<AddCarPage> {
               ),
               const SizedBox(height: 12),
               TextFormField(
-                controller: _priceController,
-                decoration: _inputDecoration('Price'),
-                keyboardType: TextInputType.number,
-                validator: (value) => value!.isEmpty ? 'Enter price' : null,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
                 controller: _buyPriceController,
                 decoration: _inputDecoration('Buy Price'),
                 keyboardType: TextInputType.number,
