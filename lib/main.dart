@@ -22,7 +22,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const AddCarPage(), // ← Change to AddCarPage() if needed
+      home: const ViewCarPage(), // ← Change to AddCarPage() if needed
     );
   }
 }

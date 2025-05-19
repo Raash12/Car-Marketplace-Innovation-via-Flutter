@@ -15,18 +15,27 @@ class AddCarPage extends StatefulWidget {
 class _AddCarPageState extends State<AddCarPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _priceController = TextEditingController();
-  final TextEditingController _rentPriceController = TextEditingController();  // New controller
-  final TextEditingController _buyPriceController = TextEditingController();   // New controller
+  final TextEditingController _buyPriceController = TextEditingController();
+  final TextEditingController _rentPriceController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _quantityController = TextEditingController();
-  final TextEditingController _mileageController = TextEditingController();
 
   String _fuelType = 'Petrol';
+  String? _selectedMileage;
+
   File? _image;
   final ImagePicker picker = ImagePicker();
 
   final String imgbbApiKey = '409164d54cc9cb69bc6e0c8910d9f487';
+
+  final List<String> _mileageOptions = [
+    '10 km/l',
+    '15 km/l',
+    '20 km/l',
+    '25 km/l',
+    '30 km/l',
+    '35+ km/l',
+  ];
 
   Future<void> _pickImage() async {
     try {
@@ -78,13 +87,12 @@ class _AddCarPageState extends State<AddCarPage> {
 
         await FirebaseFirestore.instance.collection('carlist').add({
           'name': _nameController.text.trim(),
-          'price': _priceController.text.trim(),
-          'buyPrice': _buyPriceController.text.trim(),  // Save buy price
-          'rentPrice': _rentPriceController.text.trim(), // Save rent price
+          'buyPrice': _buyPriceController.text.trim(),
+          'rentPrice': _rentPriceController.text.trim(),
           'description': _descriptionController.text.trim(),
           'quantity': int.parse(_quantityController.text.trim()),
           'specifications': {
-            'mileage': _mileageController.text.trim(),
+            'mileage': _selectedMileage,
             'fuelType': _fuelType,
           },
           'imageUrl': imageUrl,
@@ -99,6 +107,7 @@ class _AddCarPageState extends State<AddCarPage> {
         setState(() {
           _image = null;
           _fuelType = 'Petrol';
+          _selectedMileage = null;
         });
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -128,19 +137,11 @@ class _AddCarPageState extends State<AddCarPage> {
                 validator: (value) => value!.isEmpty ? 'Enter car name' : null,
               ),
               TextFormField(
-                controller: _priceController,
-                decoration: const InputDecoration(labelText: 'Price'),
-                keyboardType: TextInputType.number,
-                validator: (value) => value!.isEmpty ? 'Enter price' : null,
-              ),
-              // New buy price field
-              TextFormField(
                 controller: _buyPriceController,
                 decoration: const InputDecoration(labelText: 'Buy Price'),
                 keyboardType: TextInputType.number,
                 validator: (value) => value!.isEmpty ? 'Enter buy price' : null,
               ),
-              // New rent price field
               TextFormField(
                 controller: _rentPriceController,
                 decoration: const InputDecoration(labelText: 'Rent Price'),
@@ -159,10 +160,21 @@ class _AddCarPageState extends State<AddCarPage> {
                 keyboardType: TextInputType.number,
                 validator: (value) => value!.isEmpty ? 'Enter quantity' : null,
               ),
-              TextFormField(
-                controller: _mileageController,
+              DropdownButtonFormField<String>(
                 decoration: const InputDecoration(labelText: 'Mileage'),
-                validator: (value) => value!.isEmpty ? 'Enter mileage' : null,
+                value: _selectedMileage,
+                items: _mileageOptions.map((mileage) {
+                  return DropdownMenuItem<String>(
+                    value: mileage,
+                    child: Text(mileage),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedMileage = value!;
+                  });
+                },
+                validator: (value) => value == null ? 'Select mileage' : null,
               ),
               DropdownButtonFormField<String>(
                 value: _fuelType,
