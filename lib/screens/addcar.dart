@@ -15,14 +15,8 @@ class AddCarPage extends StatefulWidget {
 class _AddCarPageState extends State<AddCarPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
-<<<<<<< HEAD
   final TextEditingController _buyPriceController = TextEditingController();
   final TextEditingController _rentPriceController = TextEditingController();
-=======
-  final TextEditingController _priceController = TextEditingController();
-  final TextEditingController _rentPriceController = TextEditingController();
-  final TextEditingController _buyPriceController = TextEditingController();
->>>>>>> 8adf1f3f05d6edbb59841d2c32c9402c4c093807
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _quantityController = TextEditingController();
 
@@ -93,10 +87,6 @@ class _AddCarPageState extends State<AddCarPage> {
 
         await FirebaseFirestore.instance.collection('carlist').add({
           'name': _nameController.text.trim(),
-<<<<<<< HEAD
-=======
-          'price': _priceController.text.trim(),
->>>>>>> 8adf1f3f05d6edbb59841d2c32c9402c4c093807
           'buyPrice': _buyPriceController.text.trim(),
           'rentPrice': _rentPriceController.text.trim(),
           'description': _descriptionController.text.trim(),
@@ -184,20 +174,12 @@ class _AddCarPageState extends State<AddCarPage> {
                 decoration: _inputDecoration('Car Name'),
                 validator: (value) => value!.isEmpty ? 'Enter car name' : null,
               ),
-<<<<<<< HEAD
-=======
-              const SizedBox(height: 12),
->>>>>>> 8adf1f3f05d6edbb59841d2c32c9402c4c093807
               TextFormField(
                 controller: _buyPriceController,
                 decoration: _inputDecoration('Buy Price'),
                 keyboardType: TextInputType.number,
                 validator: (value) => value!.isEmpty ? 'Enter buy price' : null,
               ),
-<<<<<<< HEAD
-=======
-              const SizedBox(height: 12),
->>>>>>> 8adf1f3f05d6edbb59841d2c32c9402c4c093807
               TextFormField(
                 controller: _rentPriceController,
                 decoration: _inputDecoration('Rent Price'),
@@ -218,7 +200,6 @@ class _AddCarPageState extends State<AddCarPage> {
                 keyboardType: TextInputType.number,
                 validator: (value) => value!.isEmpty ? 'Enter quantity' : null,
               ),
-<<<<<<< HEAD
               DropdownButtonFormField<String>(
                 decoration: const InputDecoration(labelText: 'Mileage'),
                 value: _selectedMileage,
@@ -234,13 +215,6 @@ class _AddCarPageState extends State<AddCarPage> {
                   });
                 },
                 validator: (value) => value == null ? 'Select mileage' : null,
-=======
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _mileageController,
-                decoration: _inputDecoration('Mileage'),
-                validator: (value) => value!.isEmpty ? 'Enter mileage' : null,
->>>>>>> 8adf1f3f05d6edbb59841d2c32c9402c4c093807
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(

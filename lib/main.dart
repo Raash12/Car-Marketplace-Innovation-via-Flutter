@@ -1,3 +1,4 @@
+import 'package:carmarketplace/screens/admin_dashboard.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -23,12 +24,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-<<<<<<< HEAD
-      home: const ViewCarPage(), // ← Change to AddCarPage() if needed
-=======
-      // Optional: Use routes or navigate with MaterialPageRoute
-      home: const ViewCarPage(), // You can change this to AddCarPage() for testing
->>>>>>> 8adf1f3f05d6edbb59841d2c32c9402c4c093807
+      home: const AdminDashboard(), // ← Change to AddCarPage() if needed
     );
   }
 }
