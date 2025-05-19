@@ -10,4 +10,8 @@ class CartManager {
   }
 
   List<Map<String, dynamic>> get cartItems => _cartItems;
+
+  void clearCart() {
+    _cartItems.clear();
+  }
 }
