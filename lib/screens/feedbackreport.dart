@@ -20,7 +20,7 @@ class _FeedbackReportPageState extends State<FeedbackReportPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6FA), // Light admin background
+      backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBar(
         title: const Text('User Feedback Report'),
         backgroundColor: Colors.white,
@@ -28,7 +28,9 @@ class _FeedbackReportPageState extends State<FeedbackReportPage> {
         elevation: 1,
       ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: feedbackCollection.orderBy('createdAt', descending: true).snapshots(),
+        stream: feedbackCollection
+            .orderBy('createdAt', descending: true)
+            .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return const Center(child: Text('Failed to load feedback.'));
@@ -85,42 +87,76 @@ class _FeedbackReportPageState extends State<FeedbackReportPage> {
                     horizontal: 16,
                     vertical: 12,
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Stack(
                     children: [
-                      Text(
-                        message,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: isRead ? FontWeight.normal : FontWeight.w600,
-                          color: isRead ? Colors.black87 : Colors.black,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.person, size: 16, color: Colors.grey),
-                          const SizedBox(width: 4),
                           Text(
-                            name,
-                            style: const TextStyle(color: Colors.grey, fontSize: 13),
-                          ),
-                          const SizedBox(width: 16),
-                          const Icon(Icons.access_time, size: 16, color: Colors.grey),
-                          const SizedBox(width: 4),
-                          Text(
-                            formattedDate,
-                            style: const TextStyle(color: Colors.grey, fontSize: 13),
-                          ),
-                          const Spacer(),
-                          if (!isRead)
-                            IconButton(
-                              icon: const Icon(Icons.mark_email_read, color: Colors.green),
-                              tooltip: 'Mark as Read',
-                              onPressed: () => markAsRead(doc.id),
+                            message,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: isRead
+                                  ? FontWeight.normal
+                                  : FontWeight.w600,
+                              color: isRead ? Colors.black87 : Colors.black,
                             ),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              const Icon(Icons.person,
+                                  size: 16, color: Colors.grey),
+                              const SizedBox(width: 4),
+                              Text(
+                                name,
+                                style: const TextStyle(
+                                    color: Colors.grey, fontSize: 13),
+                              ),
+                              const SizedBox(width: 16),
+                              const Icon(Icons.access_time,
+                                  size: 16, color: Colors.grey),
+                              const SizedBox(width: 4),
+                              Text(
+                                formattedDate,
+                                style: const TextStyle(
+                                    color: Colors.grey, fontSize: 13),
+                              ),
+                              const Spacer(),
+                              if (!isRead)
+                                IconButton(
+                                  icon: const Icon(Icons.mark_email_read,
+                                      color: Colors.green),
+                                  tooltip: 'Mark as Read',
+                                  onPressed: () => markAsRead(doc.id),
+                                ),
+                            ],
+                          ),
                         ],
                       ),
+
+                      // "+1" red badge for unread messages
+                      if (!isRead)
+                        Positioned(
+                          top: 0,
+                          right: 0,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Text(
+                              '+1',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),
