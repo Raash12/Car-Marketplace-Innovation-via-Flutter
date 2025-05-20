@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ViewDetailPage extends StatelessWidget {
   final Map<String, dynamic> carData;
-
   const ViewDetailPage({super.key, required this.carData});
-
   @override
   Widget build(BuildContext context) {
     final specs = carData['specifications'] ?? {};
-
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5), // Light gray background
       body: CustomScrollView(
