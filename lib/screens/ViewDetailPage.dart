@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:carmarketplace/screens/RentalPage.dart';
 
 class ViewDetailPage extends StatelessWidget {
   final Map<String, dynamic> carData;
@@ -26,6 +24,7 @@ class ViewDetailPage extends StatelessWidget {
                 carData['name'] ?? '',
                 style: const TextStyle(
                   fontSize: 18,
+                  color: Colors.white, // Make title white
                   shadows: [
                     Shadow(
                       color: Colors.black54,
@@ -54,7 +53,9 @@ class ViewDetailPage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '\$${carData['price'] ?? 'N/A'}',
+                    carData['price'] != null
+                        ? '\$${carData['price']}'
+                        : 'Price N/A',
                     style: const TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.bold,
@@ -66,7 +67,8 @@ class ViewDetailPage extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _buildInfoBox('Quantity', '${carData['quantity'] ?? 'N/A'}'),
+                      _buildInfoBox(
+                          'Quantity', '${carData['quantity'] ?? 'N/A'}'),
                       _buildInfoBox('Mileage', specs['mileage'] ?? 'N/A'),
                       _buildInfoBox('Fuel', specs['fuelType'] ?? 'N/A'),
                     ],
@@ -92,109 +94,8 @@ class ViewDetailPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 30),
 
-                  // Buttons
-                  Row(
-                    children: [
-                      // Buy Button
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () async {
-                            final user = FirebaseAuth.instance.currentUser;
-                            if (user == null) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text("Please log in to add items to cart"),
-                                  backgroundColor: Colors.deepPurple,
-                                ),
-                              );
-                              return;
-                            }
+                  // Removed the Buy and Rent buttons here
 
-                            try {
-                              await FirebaseFirestore.instance
-                                  .collection('users')
-                                  .doc(user.uid)
-                                  .collection('cart')
-                                  .add({
-                                'carId': carData['id'],
-                                'name': carData['name'],
-                                'price': carData['price'],
-                                'imageUrl': carData['imageUrl'],
-                                'quantity': 1,
-                                'priceType': 'buy',
-                                'selectedPrice': carData['price'],
-                                'timestamp': FieldValue.serverTimestamp(),
-                              });
-
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text("Car added to cart"),
-                                  backgroundColor: Colors.deepPurple,
-                                ),
-                              );
-                            } catch (e) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text("Failed to add to cart: $e"),
-                                  backgroundColor: Colors.red,
-                                ),
-                              );
-                            }
-                          },
-                          icon: const Icon(Icons.shopping_cart),
-                          label: const Text("Buy"),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            textStyle: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(width: 16),
-
-                      // Rent Button
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => RentalPage(
-                                  carData: {
-                                    'id': carData['id'] ?? '',
-                                    'name': carData['name'] ?? '',
-                                    'price': carData['price'] ?? '',
-                                  },
-                                ),
-                              ),
-                            );
-                          },
-                          icon: const Icon(Icons.directions_car),
-                          label: const Text("Rent Now"),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.deepPurple,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            textStyle: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 40),
                 ],
               ),
             ),

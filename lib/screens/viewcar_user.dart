@@ -32,9 +32,7 @@ class _ViewUserCarPageState extends State<ViewUserCarPage> {
             onPressed: () async {
               try {
                 await FirebaseAuth.instance.signOut();
-
-                // Navigate back to login page and clear navigation stack
-                Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+                Navigator.of(context).pushNamedAndRemoveUntil('/login_screen', (route) => false);
               } catch (e) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('Logout failed: $e')),
@@ -52,7 +50,7 @@ class _ViewUserCarPageState extends State<ViewUserCarPage> {
               cursorColor: Colors.white,
               decoration: InputDecoration(
                 hintText: 'Search by name, fuel, etc...',
-                hintStyle: TextStyle(color: Colors.white70),
+                hintStyle: const TextStyle(color: Colors.white70),
                 prefixIcon: const Icon(Icons.search, color: Colors.white),
                 filled: true,
                 fillColor: Colors.deepPurple.withOpacity(0.5),
@@ -153,7 +151,7 @@ class _ViewUserCarPageState extends State<ViewUserCarPage> {
                             children: [
                               Text(
                                 car['name'] ?? 'Unknown Car',
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: 22,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.deepPurple,

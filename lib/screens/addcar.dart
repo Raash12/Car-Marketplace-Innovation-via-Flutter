@@ -22,13 +22,10 @@ class _AddCarPageState extends State<AddCarPage> {
   final TextEditingController _quantityController = TextEditingController();
 
   String _fuelType = 'Petrol';
-
   File? _image;
   final ImagePicker picker = ImagePicker();
-
   final String imgbbApiKey = '409164d54cc9cb69bc6e0c8910d9f487';
 
-  // Mileage options and selected mileage value
   final List<String> _mileageOptions = ['10 km/l', '12 km/l', '15 km/l', '18 km/l', '20 km/l', '25 km/l'];
   String _selectedMileage = '15 km/l';
 
@@ -76,9 +73,7 @@ class _AddCarPageState extends State<AddCarPage> {
     if (_formKey.currentState!.validate() && _image != null) {
       try {
         final imageUrl = await uploadImageToImgBB(_image!);
-        if (imageUrl == null) {
-          throw Exception("Failed to upload image to ImgBB");
-        }
+        if (imageUrl == null) throw Exception("Failed to upload image to ImgBB");
 
         await FirebaseFirestore.instance.collection('carlist').add({
           'name': _nameController.text.trim(),
@@ -95,10 +90,7 @@ class _AddCarPageState extends State<AddCarPage> {
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Car added successfully'),
-            backgroundColor: Colors.green,
-          ),
+          const SnackBar(content: Text('Car added successfully'), backgroundColor: Colors.green),
         );
 
         _formKey.currentState!.reset();
@@ -109,10 +101,7 @@ class _AddCarPageState extends State<AddCarPage> {
         });
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error adding car: $e'),
-            backgroundColor: Colors.redAccent,
-          ),
+          SnackBar(content: Text('Error adding car: $e'), backgroundColor: Colors.redAccent),
         );
       }
     } else {
@@ -128,13 +117,13 @@ class _AddCarPageState extends State<AddCarPage> {
   InputDecoration _inputDecoration(String label) {
     return InputDecoration(
       labelText: label,
-      labelStyle: TextStyle(color: Colors.grey[700]),
+      labelStyle: const TextStyle(color: Colors.deepPurple),
       filled: true,
-      fillColor: Colors.grey[200],
+      fillColor: Colors.white,
       contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: BorderSide(color: Colors.grey[400]!),
+        borderSide: const BorderSide(color: Colors.deepPurple),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
@@ -164,9 +153,11 @@ class _AddCarPageState extends State<AddCarPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Add Car'),
+        title: const Text('Add Car', style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.deepPurple,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -176,12 +167,14 @@ class _AddCarPageState extends State<AddCarPage> {
             children: [
               TextFormField(
                 controller: _nameController,
+                style: const TextStyle(color: Colors.deepPurple),
                 decoration: _inputDecoration('Car Name'),
                 validator: (value) => value!.isEmpty ? 'Enter car name' : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _buyPriceController,
+                style: const TextStyle(color: Colors.deepPurple),
                 decoration: _inputDecoration('Buy Price'),
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 inputFormatters: [
@@ -198,6 +191,7 @@ class _AddCarPageState extends State<AddCarPage> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _rentPriceController,
+                style: const TextStyle(color: Colors.deepPurple),
                 decoration: _inputDecoration('Rent Price'),
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 inputFormatters: [
@@ -214,6 +208,7 @@ class _AddCarPageState extends State<AddCarPage> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _descriptionController,
+                style: const TextStyle(color: Colors.deepPurple),
                 decoration: _inputDecoration('Description'),
                 maxLines: 3,
                 validator: (value) => value!.isEmpty ? 'Enter description' : null,
@@ -221,6 +216,7 @@ class _AddCarPageState extends State<AddCarPage> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _quantityController,
+                style: const TextStyle(color: Colors.deepPurple),
                 decoration: _inputDecoration('Quantity'),
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -233,17 +229,17 @@ class _AddCarPageState extends State<AddCarPage> {
                 },
               ),
               const SizedBox(height: 12),
-
-              // Mileage dropdown field
               DropdownButtonFormField<String>(
                 value: _selectedMileage,
                 decoration: _inputDecoration('Mileage'),
-                items: _mileageOptions
-                    .map((mileage) => DropdownMenuItem(
-                          value: mileage,
-                          child: Text(mileage, style: TextStyle(color: Colors.grey[800])),
-                        ))
-                    .toList(),
+                dropdownColor: Colors.white,
+                style: const TextStyle(color: Colors.deepPurple),
+                items: _mileageOptions.map((mileage) {
+                  return DropdownMenuItem(
+                    value: mileage,
+                    child: Text(mileage, style: const TextStyle(color: Colors.deepPurple)),
+                  );
+                }).toList(),
                 onChanged: (value) {
                   setState(() {
                     _selectedMileage = value!;
@@ -251,17 +247,18 @@ class _AddCarPageState extends State<AddCarPage> {
                 },
                 validator: (value) => value == null || value.isEmpty ? 'Select mileage' : null,
               ),
-
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 value: _fuelType,
                 decoration: _inputDecoration('Fuel Type'),
-                items: ['Petrol', 'Diesel', 'Electric', 'Hybrid']
-                    .map((type) => DropdownMenuItem(
-                          value: type,
-                          child: Text(type, style: TextStyle(color: Colors.grey[800])),
-                        ))
-                    .toList(),
+                dropdownColor: Colors.white,
+                style: const TextStyle(color: Colors.deepPurple),
+                items: ['Petrol', 'Diesel', 'Electric', 'Hybrid'].map((type) {
+                  return DropdownMenuItem(
+                    value: type,
+                    child: Text(type, style: const TextStyle(color: Colors.deepPurple)),
+                  );
+                }).toList(),
                 onChanged: (value) {
                   setState(() {
                     _fuelType = value!;
@@ -270,13 +267,13 @@ class _AddCarPageState extends State<AddCarPage> {
               ),
               const SizedBox(height: 16),
               _image == null
-                  ? Text('No image selected', style: TextStyle(color: Colors.grey[700]))
+                  ? const Text('No image selected', style: TextStyle(color: Colors.deepPurple))
                   : Image.file(_image!, height: 150),
               const SizedBox(height: 10),
               ElevatedButton.icon(
                 onPressed: _pickImage,
-                icon: const Icon(Icons.image),
-                label: const Text('Select Image from Device'),
+                icon: const Icon(Icons.image, color: Colors.white),
+                label: const Text('Select Image from Device', style: TextStyle(color: Colors.white)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.deepPurple,
                   padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
@@ -285,9 +282,10 @@ class _AddCarPageState extends State<AddCarPage> {
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: _addCarToFirestore,
-                child: const Text('Add Car'),
+                child: const Text('Add Car', style: TextStyle(color: Colors.deepPurple)),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
+                  backgroundColor: Colors.white,
+                  side: const BorderSide(color: Colors.deepPurple, width: 2),
                   padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 30),
                   textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),

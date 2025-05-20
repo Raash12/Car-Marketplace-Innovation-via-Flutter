@@ -200,7 +200,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   child: GridView.count(
                     crossAxisCount: 3,
                     crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
+                    mainAxisSpacing: 13,
                     physics: const NeverScrollableScrollPhysics(),
                     children: [
                       _buildStatCard(
@@ -225,7 +225,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16), // 🔧 Added spacing between top and bottom card grids
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: SizedBox(
@@ -372,8 +372,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
           DrawerHeader(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [Color(0xFF673AB7), Color(0xFF673AB7)
-],
+                colors: [Color(0xFF673AB7), Color(0xFF673AB7)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -401,14 +400,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
             Navigator.pop(context);
             Navigator.push(context, MaterialPageRoute(builder: (context) => const ViewCarPage()));
           }),
-          _buildDrawerItem(Icons.analytics, 'Rental Reports', () {
+          _buildDrawerItem(Icons.analytics, 'Reports', () {
             Navigator.pop(context);
             Navigator.push(context, MaterialPageRoute(builder: (context) => const ReportsPage()));
           }),
           const Divider(),
           _buildDrawerItem(Icons.logout, 'Logout', () {
             Navigator.pop(context);
-            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) =>  LoginScreen()));
+            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LoginScreen()));
           }),
         ],
       ),
