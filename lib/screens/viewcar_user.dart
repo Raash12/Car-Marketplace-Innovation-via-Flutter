@@ -1,5 +1,5 @@
 import 'package:carmarketplace/screens/Buy.dart';
-import 'package:carmarketplace/screens/RentalPage.dart';
+import 'package:carmarketplace/screens/Rent.dart';
 import 'package:carmarketplace/screens/ViewDetailPage.dart';
 import 'package:carmarketplace/screens/info.dart';
 import 'package:carmarketplace/screens/feedback.dart'; // <-- Make sure this exists

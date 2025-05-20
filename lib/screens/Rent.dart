@@ -30,9 +30,7 @@ class _RentalPageState extends State<RentalPage> {
     if (price == null) return 0.0;
     if (price is double) return price;
     if (price is int) return price.toDouble();
-    if (price is String) {
-      return double.tryParse(price) ?? 0.0;
-    }
+    if (price is String) return double.tryParse(price) ?? 0.0;
     return 0.0;
   }
 
@@ -66,9 +64,9 @@ class _RentalPageState extends State<RentalPage> {
         return;
       }
 
-      final int rentalDays = _endDate!.difference(_startDate!).inDays + 1;
-      final double pricePerDay = _parsePrice(widget.carData['rentPrice']);
-      final double totalPrice = pricePerDay * rentalDays;
+      final rentalDays = _endDate!.difference(_startDate!).inDays + 1;
+      final pricePerDay = _parsePrice(widget.carData['rentPrice']);
+      final totalPrice = pricePerDay * rentalDays;
 
       try {
         await FirebaseFirestore.instance.collection('rental').add({
@@ -108,7 +106,7 @@ class _RentalPageState extends State<RentalPage> {
         if (isStart) {
           _startDate = picked;
           if (_endDate != null && _endDate!.isBefore(_startDate!)) {
-            _endDate = null; // reset end date if invalid
+            _endDate = null;
           }
         } else {
           _endDate = picked;
@@ -124,7 +122,15 @@ class _RentalPageState extends State<RentalPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Book Rental"),
+        title: const Text(
+          "Book Rental",
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
         backgroundColor: Colors.deepPurple,
       ),
       body: SingleChildScrollView(
@@ -152,7 +158,6 @@ class _RentalPageState extends State<RentalPage> {
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     children: [
-                      // Name field
                       TextFormField(
                         controller: _nameController,
                         decoration: const InputDecoration(
@@ -164,8 +169,6 @@ class _RentalPageState extends State<RentalPage> {
                             value == null || value.isEmpty ? 'Enter your name' : null,
                       ),
                       const SizedBox(height: 16),
-
-                      // Contact field
                       TextFormField(
                         controller: _contactController,
                         keyboardType: TextInputType.phone,
@@ -184,7 +187,6 @@ class _RentalPageState extends State<RentalPage> {
 
               const SizedBox(height: 24),
 
-              // Date pickers inside card
               Card(
                 elevation: 3,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -268,10 +270,14 @@ class _RentalPageState extends State<RentalPage> {
                 height: 50,
                 child: ElevatedButton.icon(
                   onPressed: _submitBooking,
-                  icon: const Icon(Icons.send),
+                  icon: const Icon(Icons.send, color: Colors.white),
                   label: const Text(
                     'Submit Rental',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.deepPurple,

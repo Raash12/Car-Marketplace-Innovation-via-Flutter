@@ -73,7 +73,11 @@ class _BuyCarPageState extends State<BuyCarPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Buy Car"),
+        title: const Text(
+          "Buy Car",
+          style: TextStyle(color: Colors.white),
+        ),
+        iconTheme: const IconThemeData(color: Colors.white), // ← Back arrow color
         backgroundColor: Colors.deepPurple,
       ),
       body: SingleChildScrollView(
@@ -101,7 +105,6 @@ class _BuyCarPageState extends State<BuyCarPage> {
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     children: [
-                      // Name field
                       TextFormField(
                         controller: _nameController,
                         decoration: const InputDecoration(
@@ -112,10 +115,7 @@ class _BuyCarPageState extends State<BuyCarPage> {
                         validator: (value) =>
                             (value == null || value.trim().isEmpty) ? 'Please enter your name' : null,
                       ),
-
                       const SizedBox(height: 16),
-
-                      // Contact field
                       TextFormField(
                         controller: _contactController,
                         keyboardType: TextInputType.phone,
@@ -128,7 +128,6 @@ class _BuyCarPageState extends State<BuyCarPage> {
                           if (value == null || value.trim().isEmpty) {
                             return 'Please enter your contact number';
                           }
-                          // Basic phone validation (adjust as needed)
                           final pattern = RegExp(r'^\+?\d{7,15}$');
                           if (!pattern.hasMatch(value.trim())) {
                             return 'Enter a valid phone number';
@@ -136,10 +135,7 @@ class _BuyCarPageState extends State<BuyCarPage> {
                           return null;
                         },
                       ),
-
                       const SizedBox(height: 16),
-
-                      // Email field
                       TextFormField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
@@ -158,10 +154,7 @@ class _BuyCarPageState extends State<BuyCarPage> {
                           return null;
                         },
                       ),
-
                       const SizedBox(height: 16),
-
-                      // Address field
                       TextFormField(
                         controller: _addressController,
                         maxLines: 2,
@@ -173,10 +166,7 @@ class _BuyCarPageState extends State<BuyCarPage> {
                         validator: (value) =>
                             (value == null || value.trim().isEmpty) ? 'Please enter your address' : null,
                       ),
-
                       const SizedBox(height: 16),
-
-                      // Notes field (optional)
                       TextFormField(
                         controller: _notesController,
                         maxLines: 3,
@@ -186,9 +176,7 @@ class _BuyCarPageState extends State<BuyCarPage> {
                           border: OutlineInputBorder(),
                         ),
                       ),
-
                       const SizedBox(height: 24),
-
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
@@ -202,7 +190,7 @@ class _BuyCarPageState extends State<BuyCarPage> {
                           ),
                           child: const Text(
                             'Buy Now',
-                            style: TextStyle(fontSize: 18),
+                            style: TextStyle(fontSize: 18, color: Colors.white), // ← Button text color
                           ),
                         ),
                       ),

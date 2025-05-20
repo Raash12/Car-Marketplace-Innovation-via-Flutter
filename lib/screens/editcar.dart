@@ -185,7 +185,8 @@ class _EditCarPageState extends State<EditCarPage> {
               ElevatedButton(
                 onPressed: _updateCar,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
+                  backgroundColor: Colors.deepPurple,
+                  foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),

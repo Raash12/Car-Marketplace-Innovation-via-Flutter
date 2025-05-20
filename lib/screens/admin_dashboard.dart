@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:carmarketplace/screens/viewcar.dart';
 import 'package:carmarketplace/screens/addcar.dart';
-import 'package:carmarketplace/screens/rentalReport.dart';
+import 'package:carmarketplace/screens/Report.dart';
 import 'package:carmarketplace/screens/login_screen.dart';
 // <-- Import this
 
