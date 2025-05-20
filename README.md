@@ -1,8 +1,6 @@
 # carmarketplace
 
-A new Flutter project.
 
-# Flutter Car Management - Add Car Page
 
 ## Description
 
