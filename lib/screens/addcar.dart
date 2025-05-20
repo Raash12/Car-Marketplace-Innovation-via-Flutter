@@ -22,21 +22,15 @@ class _AddCarPageState extends State<AddCarPage> {
   final TextEditingController _quantityController = TextEditingController();
 
   String _fuelType = 'Petrol';
-  String? _selectedMileage;
 
   File? _image;
   final ImagePicker picker = ImagePicker();
 
   final String imgbbApiKey = '409164d54cc9cb69bc6e0c8910d9f487';
 
-  final List<String> _mileageOptions = [
-    '10 km/l',
-    '15 km/l',
-    '20 km/l',
-    '25 km/l',
-    '30 km/l',
-    '35+ km/l',
-  ];
+  // Mileage options and selected mileage value
+  final List<String> _mileageOptions = ['10 km/l', '12 km/l', '15 km/l', '18 km/l', '20 km/l', '25 km/l'];
+  String _selectedMileage = '15 km/l';
 
   Future<void> _pickImage() async {
     try {
@@ -111,7 +105,7 @@ class _AddCarPageState extends State<AddCarPage> {
         setState(() {
           _image = null;
           _fuelType = 'Petrol';
-          _selectedMileage = null;
+          _selectedMileage = '15 km/l';
         });
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -155,6 +149,16 @@ class _AddCarPageState extends State<AddCarPage> {
         borderSide: const BorderSide(color: Colors.redAccent, width: 2),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _buyPriceController.dispose();
+    _rentPriceController.dispose();
+    _descriptionController.dispose();
+    _quantityController.dispose();
+    super.dispose();
   }
 
   @override
@@ -229,22 +233,25 @@ class _AddCarPageState extends State<AddCarPage> {
                 },
               ),
               const SizedBox(height: 12),
+
+              // Mileage dropdown field
               DropdownButtonFormField<String>(
-                decoration: const InputDecoration(labelText: 'Mileage'),
                 value: _selectedMileage,
-                items: _mileageOptions.map((mileage) {
-                  return DropdownMenuItem<String>(
-                    value: mileage,
-                    child: Text(mileage),
-                  );
-                }).toList(),
+                decoration: _inputDecoration('Mileage'),
+                items: _mileageOptions
+                    .map((mileage) => DropdownMenuItem(
+                          value: mileage,
+                          child: Text(mileage, style: TextStyle(color: Colors.grey[800])),
+                        ))
+                    .toList(),
                 onChanged: (value) {
                   setState(() {
                     _selectedMileage = value!;
                   });
                 },
-                validator: (value) => value == null ? 'Select mileage' : null,
+                validator: (value) => value == null || value.isEmpty ? 'Select mileage' : null,
               ),
+
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 value: _fuelType,

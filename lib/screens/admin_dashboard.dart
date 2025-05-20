@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:carmarketplace/screens/viewcar.dart';
 import 'package:carmarketplace/screens/addcar.dart';
 import 'package:carmarketplace/screens/rentalReport.dart';
@@ -14,7 +13,7 @@ class AdminDashboard extends StatefulWidget {
 }
 
 class _AdminDashboardState extends State<AdminDashboard> {
-  List<String> imagePaths = ['image/car0.jpg', 'image/car00.jpg', 'image/car000.jpg'];
+  final List<String> imagePaths = ['image/car0.jpg', 'image/car00.jpg', 'image/car000.jpg'];
   final List<String> titles = ['Luxury Ride', 'Performance Beast', 'Eco-Friendly Drive'];
   final List<String> descriptions = [
     'Experience unmatched comfort and class.',
@@ -71,9 +70,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: true,
       backgroundColor: Colors.white,
       drawer: _buildDrawer(),
       appBar: AppBar(
@@ -81,10 +85,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
-        foregroundColor: Colors.blue[900],
+        foregroundColor: Colors.deepPurple,
         leading: Builder(
           builder: (context) => IconButton(
-            icon: Icon(Icons.menu, color: Colors.blue[900]),
+            icon: Icon(Icons.menu, color: Colors.deepPurple),
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
@@ -175,14 +179,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment: MainAxisAlignment.start,
                   children: [
                     Text(
                       'Quick Stats',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: Colors.blue[900],
+                        color: Colors.deepPurple,
                       ),
                     ),
                   ],
@@ -222,13 +226,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 ),
               ),
               const SizedBox(height: 24),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                ),
-              ),
-              const SizedBox(height: 12),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: SizedBox(
@@ -359,6 +356,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
+  Widget _buildDrawerItem(IconData icon, String title, VoidCallback onTap) {
+    return ListTile(
+      leading: Icon(icon, color: Colors.deepPurple),
+      title: Text(title, style: const TextStyle(color: Colors.deepPurple)),
+      onTap: onTap,
+    );
+  }
+
   Widget _buildDrawer() {
     return Drawer(
       child: ListView(
@@ -367,7 +372,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
           DrawerHeader(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [Color(0xFF001F54), Color(0xFF003580)],
+                colors: [Color(0xFF673AB7), Color(0xFF673AB7)
+],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -378,55 +384,34 @@ class _AdminDashboardState extends State<AdminDashboard> {
               children: [
                 CircleAvatar(radius: 32, backgroundImage: AssetImage('image/profile.jpg')),
                 SizedBox(height: 12),
-                Text('Admin Panel', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+                Text('Admin Panel',
+                    style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
                 Text('admin@gmail.com', style: TextStyle(color: Colors.white70, fontSize: 14)),
               ],
             ),
           ),
-          _buildDrawerItem(Icons.dashboard, 'Dashboard', () {}),
+          _buildDrawerItem(Icons.dashboard, 'Dashboard', () {
+            Navigator.pop(context);
+          }),
           _buildDrawerItem(Icons.add_circle, 'Add Cars', () {
+            Navigator.pop(context);
             Navigator.push(context, MaterialPageRoute(builder: (context) => const AddCarPage()));
           }),
           _buildDrawerItem(Icons.directions_car, 'View Cars', () {
+            Navigator.pop(context);
             Navigator.push(context, MaterialPageRoute(builder: (context) => const ViewCarPage()));
           }),
-          _buildDrawerItem(Icons.receipt, 'Reports', () {
+          _buildDrawerItem(Icons.analytics, 'Rental Reports', () {
+            Navigator.pop(context);
             Navigator.push(context, MaterialPageRoute(builder: (context) => const ReportsPage()));
           }),
           const Divider(),
-          _buildDrawerItem(Icons.logout, 'Logout', () async {
-            try {
-              await FirebaseAuth.instance.signOut();
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (context) => LoginScreen()),
-                (Route<dynamic> route) => false,
-              );
-            } catch (e) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Error signing out: $e')),
-              );
-            }
+          _buildDrawerItem(Icons.logout, 'Logout', () {
+            Navigator.pop(context);
+            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) =>  LoginScreen()));
           }),
         ],
       ),
     );
-  }
-
-  Widget _buildDrawerItem(IconData icon, String title, VoidCallback onTap) {
-    return ListTile(
-      leading: Icon(icon, color: Colors.blue[900]),
-      title: Text(title),
-      onTap: () {
-        Navigator.of(context).pop();
-        onTap();
-      },
-    );
-  }
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
   }
 }

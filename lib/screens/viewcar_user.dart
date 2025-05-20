@@ -3,6 +3,7 @@ import 'package:carmarketplace/screens/RentalPage.dart';
 import 'package:carmarketplace/screens/ViewDetailPage.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ViewUserCarPage extends StatefulWidget {
   const ViewUserCarPage({super.key});
@@ -19,10 +20,29 @@ class _ViewUserCarPageState extends State<ViewUserCarPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFFFF8F0),
       appBar: AppBar(
+        automaticallyImplyLeading: false, // Remove back arrow here
         title: const Text('Available Cars'),
         backgroundColor: Colors.deepPurple,
         foregroundColor: Colors.white,
         elevation: 4,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: 'Logout',
+            onPressed: () async {
+              try {
+                await FirebaseAuth.instance.signOut();
+
+                // Navigate back to login page and clear navigation stack
+                Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Logout failed: $e')),
+                );
+              }
+            },
+          ),
+        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(56),
           child: Padding(
@@ -60,10 +80,8 @@ class _ViewUserCarPageState extends State<ViewUserCarPage> {
             );
           }
 
-          // Get all cars from Firestore
           final cars = snapshot.data!.docs;
 
-          // Filter cars based on search query
           final filteredCars = cars.where((doc) {
             final car = doc.data() as Map<String, dynamic>;
             final specs = car['specifications'] ?? {};
@@ -72,7 +90,6 @@ class _ViewUserCarPageState extends State<ViewUserCarPage> {
             final buyPrice = (car['buyPrice'] ?? '').toString().toLowerCase();
             final rentPrice = (car['rentPrice'] ?? '').toString().toLowerCase();
 
-            // Search in name, fuelType, buyPrice, rentPrice
             return name.contains(_searchQuery) ||
                 fuelType.contains(_searchQuery) ||
                 buyPrice.contains(_searchQuery) ||

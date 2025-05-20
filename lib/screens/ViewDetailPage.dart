@@ -13,7 +13,7 @@ class ViewDetailPage extends StatelessWidget {
     final specs = carData['specifications'] ?? {};
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF7F0),
+      backgroundColor: const Color(0xFFF5F5F5), // Light gray background
       body: CustomScrollView(
         slivers: [
           // Car image with SliverAppBar
@@ -102,7 +102,10 @@ class ViewDetailPage extends StatelessWidget {
                             final user = FirebaseAuth.instance.currentUser;
                             if (user == null) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text("Please log in to add items to cart")),
+                                const SnackBar(
+                                  content: Text("Please log in to add items to cart"),
+                                  backgroundColor: Colors.deepPurple,
+                                ),
                               );
                               return;
                             }
@@ -124,11 +127,17 @@ class ViewDetailPage extends StatelessWidget {
                               });
 
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text("Car added to cart")),
+                                const SnackBar(
+                                  content: Text("Car added to cart"),
+                                  backgroundColor: Colors.deepPurple,
+                                ),
                               );
                             } catch (e) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text("Failed to add to cart: $e")),
+                                SnackBar(
+                                  content: Text("Failed to add to cart: $e"),
+                                  backgroundColor: Colors.red,
+                                ),
                               );
                             }
                           },
