@@ -1,6 +1,7 @@
 
 import 'package:carmarketplace/screens/ViewDetailPage.dart';
 import 'package:carmarketplace/screens/admin_dashboard.dart';
+import 'package:carmarketplace/screens/feedbackreport.dart';
 import 'package:carmarketplace/screens/login_screen.dart';
 import 'package:carmarketplace/screens/register_screen.dart';
 import 'package:carmarketplace/screens/viewcar_user.dart';
@@ -32,7 +33,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: WelcomeScreen() // ← Change to AddCarPage() if needed
+      home: AdminDashboard() // ← Change to AddCarPage() if needed
     );
   }
 }

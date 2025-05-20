@@ -1,6 +1,8 @@
 import 'package:carmarketplace/screens/Buy.dart';
 import 'package:carmarketplace/screens/RentalPage.dart';
 import 'package:carmarketplace/screens/ViewDetailPage.dart';
+import 'package:carmarketplace/screens/info.dart';
+import 'package:carmarketplace/screens/feedback.dart'; // <-- Make sure this exists
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -20,27 +22,10 @@ class _ViewUserCarPageState extends State<ViewUserCarPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFFFF8F0),
       appBar: AppBar(
-        automaticallyImplyLeading: false, // Remove back arrow here
         title: const Text('Available Cars'),
         backgroundColor: Colors.deepPurple,
         foregroundColor: Colors.white,
         elevation: 4,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Logout',
-            onPressed: () async {
-              try {
-                await FirebaseAuth.instance.signOut();
-                Navigator.of(context).pushNamedAndRemoveUntil('/login_screen', (route) => false);
-              } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Logout failed: $e')),
-                );
-              }
-            },
-          ),
-        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(56),
           child: Padding(
@@ -69,17 +54,80 @@ class _ViewUserCarPageState extends State<ViewUserCarPage> {
           ),
         ),
       ),
+      drawer: Drawer(
+        backgroundColor: Colors.white,
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            DrawerHeader(
+              decoration: const BoxDecoration(color: Colors.deepPurple),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  Text(
+                    'Welcome!',
+                    style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Explore your car options below.',
+                    style: TextStyle(color: Colors.white70),
+                  ),
+                ],
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.directions_car, color: Colors.deepPurple),
+              title: const Text('Available Cars'),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.feedback_outlined, color: Colors.deepPurple),
+              title: const Text('Feedback'),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const FeedbackFormPage()),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.info_outline, color: Colors.deepPurple),
+              title: const Text('About & Contact'),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const AboutContactPage()),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.logout, color: Colors.deepPurple),
+              title: const Text('Logout'),
+              onTap: () async {
+                try {
+                  await FirebaseAuth.instance.signOut();
+                  Navigator.of(context).pushNamedAndRemoveUntil('/login_screen', (route) => false);
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Logout failed: $e')),
+                  );
+                }
+              },
+            ),
+          ],
+        ),
+      ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance.collection('carlist').snapshots(),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
-            return const Center(
-              child: CircularProgressIndicator(color: Colors.deepPurple),
-            );
+            return const Center(child: CircularProgressIndicator(color: Colors.deepPurple));
           }
 
           final cars = snapshot.data!.docs;
-
           final filteredCars = cars.where((doc) {
             final car = doc.data() as Map<String, dynamic>;
             final specs = car['specifications'] ?? {};
@@ -98,7 +146,7 @@ class _ViewUserCarPageState extends State<ViewUserCarPage> {
             return Center(
               child: Text(
                 'No cars found matching "$_searchQuery" 😞',
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 18,
                   color: Colors.deepPurple,
                   fontWeight: FontWeight.w500,
@@ -160,24 +208,15 @@ class _ViewUserCarPageState extends State<ViewUserCarPage> {
                               const SizedBox(height: 6),
                               Text(
                                 'Buy: \$${car['buyPrice'] ?? 'N/A'}',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.grey[700],
-                                ),
+                                style: TextStyle(fontSize: 16, color: Colors.grey[700]),
                               ),
                               Text(
                                 'Rent: \$${car['rentPrice'] ?? 'N/A'}',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.grey[700],
-                                ),
+                                style: TextStyle(fontSize: 16, color: Colors.grey[700]),
                               ),
                               Text(
                                 'Fuel: ${specs['fuelType'] ?? 'N/A'}',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.grey[700],
-                                ),
+                                style: TextStyle(fontSize: 16, color: Colors.grey[700]),
                               ),
                             ],
                           ),
@@ -192,9 +231,7 @@ class _ViewUserCarPageState extends State<ViewUserCarPage> {
                             onPressed: () {
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(
-                                  builder: (context) => ViewDetailPage(carData: car),
-                                ),
+                                MaterialPageRoute(builder: (context) => ViewDetailPage(carData: car)),
                               );
                             },
                             icon: const Icon(Icons.info_outline),
@@ -202,9 +239,7 @@ class _ViewUserCarPageState extends State<ViewUserCarPage> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.deepPurple,
                               foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                               padding: const EdgeInsets.symmetric(vertical: 12),
                             ),
                           ),
@@ -215,9 +250,7 @@ class _ViewUserCarPageState extends State<ViewUserCarPage> {
                             onPressed: () {
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(
-                                  builder: (context) => BuyCarPage(carData: car),
-                                ),
+                                MaterialPageRoute(builder: (context) => BuyCarPage(carData: car)),
                               );
                             },
                             icon: const Icon(Icons.shopping_bag_outlined),
@@ -225,9 +258,7 @@ class _ViewUserCarPageState extends State<ViewUserCarPage> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.green,
                               foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                               padding: const EdgeInsets.symmetric(vertical: 12),
                             ),
                           ),
@@ -238,9 +269,7 @@ class _ViewUserCarPageState extends State<ViewUserCarPage> {
                             onPressed: () {
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(
-                                  builder: (context) => RentalPage(carData: car),
-                                ),
+                                MaterialPageRoute(builder: (context) => RentalPage(carData: car)),
                               );
                             },
                             icon: const Icon(Icons.car_rental),
@@ -248,9 +277,7 @@ class _ViewUserCarPageState extends State<ViewUserCarPage> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.deepPurple.withOpacity(0.7),
                               foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                               padding: const EdgeInsets.symmetric(vertical: 12),
                             ),
                           ),

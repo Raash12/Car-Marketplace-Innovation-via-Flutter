@@ -1,9 +1,11 @@
+import 'package:carmarketplace/screens/feedbackreport.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:carmarketplace/screens/viewcar.dart';
 import 'package:carmarketplace/screens/addcar.dart';
 import 'package:carmarketplace/screens/rentalReport.dart';
 import 'package:carmarketplace/screens/login_screen.dart';
+// <-- Import this
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -20,6 +22,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     'Power and speed blended with style.',
     'Go green without compromising performance.'
   ];
+
   late final PageController _pageController;
   int _currentPage = 0;
   int totalCars = 0;
@@ -92,6 +95,17 @@ class _AdminDashboardState extends State<AdminDashboard> {
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.feedback, color: Colors.deepPurple),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const FeedbackReportPage()),
+              );
+            },
+          ),
+        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -225,7 +239,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   ),
                 ),
               ),
-              const SizedBox(height: 16), // 🔧 Added spacing between top and bottom card grids
+              const SizedBox(height: 16),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: SizedBox(
@@ -277,6 +291,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
           ),
         ),
       ),
+      // Removed floatingActionButton here
     );
   }
 
@@ -299,23 +314,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
           children: [
             Icon(icon, size: 32, color: color),
             const SizedBox(height: 8),
-            Text(
-              count,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-            ),
+            Text(count, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)),
             const SizedBox(height: 4),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: color,
-              ),
-            ),
+            Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: color)),
           ],
         ),
       ),
@@ -342,14 +343,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
           children: [
             Icon(icon, size: 32, color: color),
             const SizedBox(height: 8),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-            ),
+            Text(label, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: color)),
           ],
         ),
       ),

@@ -94,7 +94,7 @@ class ViewDetailPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 30),
 
-                  // Removed the Buy and Rent buttons here
+                
 
                 ],
               ),
