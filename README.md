@@ -24,11 +24,7 @@ This project demonstrates practical use of Flutter forms, validation, image pick
 
 ---
 
-## Screenshots
 
-*Add screenshots here to showcase the UI and UX*
-
----
 
 ## Getting Started
 
