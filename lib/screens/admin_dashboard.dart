@@ -1,11 +1,10 @@
-import 'package:carmarketplace/screens/feedbackreport.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:carmarketplace/screens/viewcar.dart';
 import 'package:carmarketplace/screens/addcar.dart';
 import 'package:carmarketplace/screens/Report.dart';
 import 'package:carmarketplace/screens/login_screen.dart';
-// <-- Import this
+import 'package:carmarketplace/screens/feedbackreport.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -91,7 +90,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
         foregroundColor: Colors.deepPurple,
         leading: Builder(
           builder: (context) => IconButton(
-            icon: Icon(Icons.menu, color: Colors.deepPurple),
+            icon: const Icon(Icons.menu, color: Colors.deepPurple),
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
@@ -115,12 +114,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               AspectRatio(
                 aspectRatio: 16 / 9,
                 child: imagePaths.isEmpty
-                    ? const Center(
-                        child: Text(
-                          'No images available.',
-                          style: TextStyle(fontSize: 18, color: Colors.black54),
-                        ),
-                      )
+                    ? const Center(child: Text('No images available.', style: TextStyle(fontSize: 18, color: Colors.black54)))
                     : PageView.builder(
                         controller: _pageController,
                         itemCount: imagePaths.length,
@@ -190,108 +184,66 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       ),
               ),
               const SizedBox(height: 24),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Quick Stats',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.deepPurple,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 12),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: SizedBox(
-                  height: 120,
-                  child: GridView.count(
-                    crossAxisCount: 3,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 13,
-                    physics: const NeverScrollableScrollPhysics(),
-                    children: [
-                      _buildStatCard(
-                        icon: Icons.directions_car_filled,
-                        title: 'Total Cars',
-                        count: totalCars.toString(),
-                        color: Colors.lightBlueAccent,
-                      ),
-                      _buildStatCard(
-                        icon: Icons.car_rental,
-                        title: 'Total Rentals',
-                        count: totalRentals.toString(),
-                        color: Colors.deepPurpleAccent,
-                      ),
-                      _buildStatCard(
-                        icon: Icons.shopping_cart,
-                        title: 'Total Buys',
-                        count: totalBuys.toString(),
-                        color: Colors.orangeAccent,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              _buildStatsSection(),
               const SizedBox(height: 16),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: SizedBox(
-                  height: 120,
-                  child: GridView.count(
-                    crossAxisCount: 3,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                    physics: const NeverScrollableScrollPhysics(),
-                    children: [
-                      _buildQuickAction(
-                        icon: Icons.add_circle_outline,
-                        label: 'Add Car',
-                        color: Colors.green,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const AddCarPage()),
-                          );
-                        },
-                      ),
-                      _buildQuickAction(
-                        icon: Icons.directions_car,
-                        label: 'View Cars',
-                        color: Colors.blue,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const ViewCarPage()),
-                          );
-                        },
-                      ),
-                      _buildQuickAction(
-                        icon: Icons.analytics,
-                        label: 'Reports',
-                        color: Colors.purple,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const ReportsPage()),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              _buildQuickActions(),
             ],
           ),
         ),
       ),
-      // Removed floatingActionButton here
+    );
+  }
+
+  Widget _buildStatsSection() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Quick Stats', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.deepPurple)),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 120,
+            child: GridView.count(
+              crossAxisCount: 3,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 13,
+              physics: const NeverScrollableScrollPhysics(),
+              children: [
+                _buildStatCard(icon: Icons.directions_car_filled, title: 'Total Cars', count: totalCars.toString(), color: Colors.lightBlueAccent),
+                _buildStatCard(icon: Icons.car_rental, title: 'Total Rentals', count: totalRentals.toString(), color: Colors.deepPurpleAccent),
+                _buildStatCard(icon: Icons.shopping_cart, title: 'Total Buys', count: totalBuys.toString(), color: Colors.orangeAccent),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickActions() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: SizedBox(
+        height: 120,
+        child: GridView.count(
+          crossAxisCount: 3,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
+          physics: const NeverScrollableScrollPhysics(),
+          children: [
+            _buildQuickAction(icon: Icons.add_circle_outline, label: 'Add Car', color: Colors.green, onTap: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const AddCarPage()));
+            }),
+            _buildQuickAction(icon: Icons.directions_car, label: 'View Cars', color: Colors.blue, onTap: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const ViewCarPage()));
+            }),
+            _buildQuickAction(icon: Icons.analytics, label: 'Reports', color: Colors.purple, onTap: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const ReportsPage()));
+            }),
+          ],
+        ),
+      ),
     );
   }
 
@@ -377,15 +329,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
               children: [
                 CircleAvatar(radius: 32, backgroundImage: AssetImage('image/profile.jpg')),
                 SizedBox(height: 12),
-                Text('Admin Panel',
-                    style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+                Text('Admin Panel', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
                 Text('admin@gmail.com', style: TextStyle(color: Colors.white70, fontSize: 14)),
               ],
             ),
           ),
-          _buildDrawerItem(Icons.dashboard, 'Dashboard', () {
-            Navigator.pop(context);
-          }),
+          _buildDrawerItem(Icons.dashboard, 'Dashboard', () => Navigator.pop(context)),
           _buildDrawerItem(Icons.add_circle, 'Add Cars', () {
             Navigator.pop(context);
             Navigator.push(context, MaterialPageRoute(builder: (context) => const AddCarPage()));
@@ -397,6 +346,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
           _buildDrawerItem(Icons.analytics, 'Reports', () {
             Navigator.pop(context);
             Navigator.push(context, MaterialPageRoute(builder: (context) => const ReportsPage()));
+          }),
+          _buildDrawerItem(Icons.feedback, 'Feedback Report', () {
+            Navigator.pop(context);
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const FeedbackReportPage()));
           }),
           const Divider(),
           _buildDrawerItem(Icons.logout, 'Logout', () {

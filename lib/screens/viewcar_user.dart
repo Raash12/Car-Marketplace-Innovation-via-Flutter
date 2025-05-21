@@ -66,7 +66,10 @@ class _ViewUserCarPageState extends State<ViewUserCarPage> {
                 children: const [
                   Text(
                     'Welcome!',
-                    style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold),
                   ),
                   SizedBox(height: 8),
                   Text(
@@ -77,19 +80,22 @@ class _ViewUserCarPageState extends State<ViewUserCarPage> {
               ),
             ),
             ListTile(
-              leading: const Icon(Icons.directions_car, color: Colors.deepPurple),
+              leading:
+                  const Icon(Icons.directions_car, color: Colors.deepPurple),
               title: const Text('Available Cars'),
               onTap: () {
                 Navigator.pop(context);
               },
             ),
             ListTile(
-              leading: const Icon(Icons.feedback_outlined, color: Colors.deepPurple),
+              leading:
+                  const Icon(Icons.feedback_outlined, color: Colors.deepPurple),
               title: const Text('Feedback'),
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const FeedbackFormPage()),
+                  MaterialPageRoute(
+                      builder: (context) => const FeedbackFormPage()),
                 );
               },
             ),
@@ -99,7 +105,8 @@ class _ViewUserCarPageState extends State<ViewUserCarPage> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const AboutContactPage()),
+                  MaterialPageRoute(
+                      builder: (context) => const AboutContactPage()),
                 );
               },
             ),
@@ -109,7 +116,8 @@ class _ViewUserCarPageState extends State<ViewUserCarPage> {
               onTap: () async {
                 try {
                   await FirebaseAuth.instance.signOut();
-                  Navigator.of(context).pushNamedAndRemoveUntil('/login_screen', (route) => false);
+                  Navigator.of(context)
+                      .pushNamedAndRemoveUntil('/login', (route) => false);
                 } catch (e) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('Logout failed: $e')),
@@ -124,7 +132,8 @@ class _ViewUserCarPageState extends State<ViewUserCarPage> {
         stream: FirebaseFirestore.instance.collection('carlist').snapshots(),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator(color: Colors.deepPurple));
+            return const Center(
+                child: CircularProgressIndicator(color: Colors.deepPurple));
           }
 
           final cars = snapshot.data!.docs;
@@ -189,7 +198,8 @@ class _ViewUserCarPageState extends State<ViewUserCarPage> {
                             height: 110,
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) =>
-                                const Icon(Icons.image_not_supported, size: 110, color: Colors.grey),
+                                const Icon(Icons.image_not_supported,
+                                    size: 110, color: Colors.grey),
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -208,15 +218,18 @@ class _ViewUserCarPageState extends State<ViewUserCarPage> {
                               const SizedBox(height: 6),
                               Text(
                                 'Buy: \$${car['buyPrice'] ?? 'N/A'}',
-                                style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+                                style: TextStyle(
+                                    fontSize: 16, color: Colors.grey[700]),
                               ),
                               Text(
                                 'Rent: \$${car['rentPrice'] ?? 'N/A'}',
-                                style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+                                style: TextStyle(
+                                    fontSize: 16, color: Colors.grey[700]),
                               ),
                               Text(
                                 'Fuel: ${specs['fuelType'] ?? 'N/A'}',
-                                style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+                                style: TextStyle(
+                                    fontSize: 16, color: Colors.grey[700]),
                               ),
                             ],
                           ),
@@ -231,7 +244,9 @@ class _ViewUserCarPageState extends State<ViewUserCarPage> {
                             onPressed: () {
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (context) => ViewDetailPage(carData: car)),
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        ViewDetailPage(carData: car)),
                               );
                             },
                             icon: const Icon(Icons.info_outline),
@@ -239,7 +254,8 @@ class _ViewUserCarPageState extends State<ViewUserCarPage> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.deepPurple,
                               foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14)),
                               padding: const EdgeInsets.symmetric(vertical: 12),
                             ),
                           ),
@@ -250,7 +266,9 @@ class _ViewUserCarPageState extends State<ViewUserCarPage> {
                             onPressed: () {
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (context) => BuyCarPage(carData: car)),
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        BuyCarPage(carData: car)),
                               );
                             },
                             icon: const Icon(Icons.shopping_bag_outlined),
@@ -258,7 +276,8 @@ class _ViewUserCarPageState extends State<ViewUserCarPage> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.green,
                               foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14)),
                               padding: const EdgeInsets.symmetric(vertical: 12),
                             ),
                           ),
@@ -269,15 +288,19 @@ class _ViewUserCarPageState extends State<ViewUserCarPage> {
                             onPressed: () {
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (context) => RentalPage(carData: car)),
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        RentalPage(carData: car)),
                               );
                             },
                             icon: const Icon(Icons.car_rental),
                             label: const Text('Rent'),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.deepPurple.withOpacity(0.7),
+                              backgroundColor:
+                                  Colors.deepPurple.withOpacity(0.7),
                               foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14)),
                               padding: const EdgeInsets.symmetric(vertical: 12),
                             ),
                           ),

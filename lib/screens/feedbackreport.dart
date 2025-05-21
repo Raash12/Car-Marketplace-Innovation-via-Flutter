@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 
 class FeedbackReportPage extends StatefulWidget {
   const FeedbackReportPage({super.key});
@@ -19,12 +20,17 @@ class _FeedbackReportPageState extends State<FeedbackReportPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBar(
-        title: const Text('User Feedback'),
-        backgroundColor: const Color.fromARGB(255, 255, 255, 255),
+        title: const Text('User Feedback Report'),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 1,
       ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: feedbackCollection.orderBy('createdAt', descending: true).snapshots(),
+        stream: feedbackCollection
+            .orderBy('createdAt', descending: true)
+            .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return const Center(child: Text('Failed to load feedback.'));
@@ -40,8 +46,9 @@ class _FeedbackReportPageState extends State<FeedbackReportPage> {
           }
 
           return ListView.separated(
+            padding: const EdgeInsets.all(16),
             itemCount: docs.length,
-            separatorBuilder: (_, __) => const Divider(),
+            separatorBuilder: (_, __) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
               final doc = docs[index];
               final data = doc.data()! as Map<String, dynamic>;
@@ -51,27 +58,108 @@ class _FeedbackReportPageState extends State<FeedbackReportPage> {
               final timestamp = data['createdAt'] as Timestamp?;
               final date = timestamp?.toDate() ?? DateTime.now();
 
-              return ListTile(
-                title: Text(
-                  message,
-                  style: TextStyle(
-                    fontWeight: isRead ? FontWeight.normal : FontWeight.bold,
-                    color: isRead ? Colors.grey : Colors.black,
+              final formattedDate =
+                  DateFormat('dd MMM yyyy, hh:mm a').format(date);
+
+              return GestureDetector(
+                onTap: () {
+                  if (!isRead) markAsRead(doc.id);
+                },
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border(
+                      left: BorderSide(
+                        color: isRead ? Colors.grey.shade300 : Colors.blue,
+                        width: 5,
+                      ),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.1),
+                        blurRadius: 5,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  child: Stack(
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            message,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: isRead
+                                  ? FontWeight.normal
+                                  : FontWeight.w600,
+                              color: isRead ? Colors.black87 : Colors.black,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              const Icon(Icons.person,
+                                  size: 16, color: Colors.grey),
+                              const SizedBox(width: 4),
+                              Text(
+                                name,
+                                style: const TextStyle(
+                                    color: Colors.grey, fontSize: 13),
+                              ),
+                              const SizedBox(width: 16),
+                              const Icon(Icons.access_time,
+                                  size: 16, color: Colors.grey),
+                              const SizedBox(width: 4),
+                              Text(
+                                formattedDate,
+                                style: const TextStyle(
+                                    color: Colors.grey, fontSize: 13),
+                              ),
+                              const Spacer(),
+                              if (!isRead)
+                                IconButton(
+                                  icon: const Icon(Icons.mark_email_read,
+                                      color: Colors.green),
+                                  tooltip: 'Mark as Read',
+                                  onPressed: () => markAsRead(doc.id),
+                                ),
+                            ],
+                          ),
+                        ],
+                      ),
+
+                      // "+1" red badge for unread messages
+                      if (!isRead)
+                        Positioned(
+                          top: 0,
+                          right: 0,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Text(
+                              '+1',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
-                subtitle: Text('$name - ${date.toLocal()}'.split('.')[0]),
-                trailing: isRead
-                    ? null
-                    : IconButton(
-                        icon: const Icon(Icons.mark_email_read, color: Colors.green),
-                        tooltip: 'Mark as Read',
-                        onPressed: () => markAsRead(doc.id),
-                      ),
-                onTap: () {
-                  if (!isRead) {
-                    markAsRead(doc.id);
-                  }
-                },
               );
             },
           );
