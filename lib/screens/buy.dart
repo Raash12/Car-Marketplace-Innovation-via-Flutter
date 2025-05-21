@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:printing/printing.dart';
+import 'pdf_invoice_service.dart'; // Adjust the path if needed
 
 class BuyCarPage extends StatefulWidget {
   final Map<String, dynamic> carData;
@@ -54,6 +56,18 @@ class _BuyCarPageState extends State<BuyCarPage> {
           'createdAt': Timestamp.now(),
         });
 
+        final buyerInfo = {
+          'name': _nameController.text.trim(),
+          'contact': _contactController.text.trim(),
+          'email': _emailController.text.trim(),
+          'address': _addressController.text.trim(),
+        };
+
+        final pdfService = PdfInvoiceService();
+        final pdfData = await pdfService.generateInvoicePdf(widget.carData, buyerInfo);
+
+        await Printing.layoutPdf(onLayout: (format) async => pdfData);
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Car purchased for \$${price.toStringAsFixed(2)}')),
         );
@@ -73,11 +87,8 @@ class _BuyCarPageState extends State<BuyCarPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          "Buy Car",
-          style: TextStyle(color: Colors.white),
-        ),
-        iconTheme: const IconThemeData(color: Colors.white), // ← Back arrow color
+        title: const Text("Buy Car", style: TextStyle(color: Colors.white)),
+        iconTheme: const IconThemeData(color: Colors.white),
         backgroundColor: Colors.deepPurple,
       ),
       body: SingleChildScrollView(
@@ -190,7 +201,7 @@ class _BuyCarPageState extends State<BuyCarPage> {
                           ),
                           child: const Text(
                             'Buy Now',
-                            style: TextStyle(fontSize: 18, color: Colors.white), // ← Button text color
+                            style: TextStyle(fontSize: 18, color: Colors.white),
                           ),
                         ),
                       ),
