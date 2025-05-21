@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 class RentalPage extends StatefulWidget {
   final Map<String, dynamic> carData;
@@ -15,6 +18,7 @@ class _RentalPageState extends State<RentalPage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _contactController = TextEditingController();
+
   DateTime? _startDate;
   DateTime? _endDate;
   double? _totalPrice;
@@ -35,7 +39,7 @@ class _RentalPageState extends State<RentalPage> {
   }
 
   void _updateTotalPrice() {
-    if (_startDate != null && _endDate != null && !(_endDate!.isBefore(_startDate!))) {
+    if (_startDate != null && _endDate != null && !_endDate!.isBefore(_startDate!)) {
       final rentalDays = _endDate!.difference(_startDate!).inDays + 1;
       final pricePerDay = _parsePrice(widget.carData['rentPrice']);
       setState(() {
@@ -48,59 +52,14 @@ class _RentalPageState extends State<RentalPage> {
     }
   }
 
-  Future<void> _submitBooking() async {
-    if (_formKey.currentState!.validate()) {
-      if (_startDate == null || _endDate == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select both start and end dates')),
-        );
-        return;
-      }
-
-      if (_endDate!.isBefore(_startDate!)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('End date cannot be before start date')),
-        );
-        return;
-      }
-
-      final rentalDays = _endDate!.difference(_startDate!).inDays + 1;
-      final pricePerDay = _parsePrice(widget.carData['rentPrice']);
-      final totalPrice = pricePerDay * rentalDays;
-
-      try {
-        await FirebaseFirestore.instance.collection('rental').add({
-          'carName': widget.carData['name'],
-          'rentPrice': pricePerDay,
-          'totalPrice': totalPrice,
-          'days': rentalDays,
-          'name': _nameController.text.trim(),
-          'contact': _contactController.text.trim(),
-          'startDate': _startDate,
-          'endDate': _endDate,
-          'createdAt': Timestamp.now(),
-        });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Rental booked for \$${totalPrice.toStringAsFixed(2)}')),
-        );
-
-        Navigator.pop(context);
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
-        );
-      }
-    }
-  }
-
   Future<void> _pickDate(BuildContext context, bool isStart) async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: isStart ? (_startDate ?? DateTime.now()) : (_endDate ?? (_startDate ?? DateTime.now())),
+      initialDate: isStart ? (_startDate ?? DateTime.now()) : (_endDate ?? _startDate ?? DateTime.now()),
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365)),
     );
+
     if (picked != null) {
       setState(() {
         if (isStart) {
@@ -116,6 +75,86 @@ class _RentalPageState extends State<RentalPage> {
     }
   }
 
+  Future<void> _generateInvoicePdf(Map<String, dynamic> data) async {
+    final pdf = pw.Document();
+
+    pdf.addPage(
+      pw.Page(
+        build: (context) => pw.Padding(
+          padding: const pw.EdgeInsets.all(24),
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text('Rental Invoice', style: pw.TextStyle(fontSize: 28, fontWeight: pw.FontWeight.bold)),
+              pw.SizedBox(height: 20),
+              pw.Text('Customer Name: ${data['name']}'),
+              pw.Text('Contact Number: ${data['contact']}'),
+              pw.Text('Car Name: ${data['carName']}'),
+              pw.Text('Price Per Day: \$${data['rentPrice']}'),
+              pw.Text('Rental Days: ${data['days']}'),
+              pw.Text('Start Date: ${DateFormat('yyyy-MM-dd').format((data['startDate'] as Timestamp).toDate())}'),
+              pw.Text('End Date: ${DateFormat('yyyy-MM-dd').format((data['endDate'] as Timestamp).toDate())}'),
+              pw.SizedBox(height: 12),
+              pw.Text('Total Price: \$${data['totalPrice'].toStringAsFixed(2)}', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    await Printing.layoutPdf(onLayout: (format) async => pdf.save());
+  }
+
+  Future<void> _submitBooking() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    if (_startDate == null || _endDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select both start and end dates.')),
+      );
+      return;
+    }
+
+    if (_endDate!.isBefore(_startDate!)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('End date cannot be before start date.')),
+      );
+      return;
+    }
+
+    final rentalDays = _endDate!.difference(_startDate!).inDays + 1;
+    final pricePerDay = _parsePrice(widget.carData['rentPrice']);
+    final totalPrice = pricePerDay * rentalDays;
+
+    final rentalData = {
+      'carName': widget.carData['name'],
+      'rentPrice': pricePerDay,
+      'totalPrice': totalPrice,
+      'days': rentalDays,
+      'name': _nameController.text.trim(),
+      'contact': _contactController.text.trim(),
+      'startDate': Timestamp.fromDate(_startDate!),
+      'endDate': Timestamp.fromDate(_endDate!),
+      'createdAt': Timestamp.now(),
+    };
+
+    try {
+      await FirebaseFirestore.instance.collection('rental').add(rentalData);
+
+      await _generateInvoicePdf(rentalData); // generate PDF after booking
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Rental booked for \$${totalPrice.toStringAsFixed(2)}')),
+      );
+
+      Navigator.pop(context);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final pricePerDay = _parsePrice(widget.carData['rentPrice']);
@@ -124,33 +163,24 @@ class _RentalPageState extends State<RentalPage> {
       appBar: AppBar(
         title: const Text(
           "Book Rental",
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold,  color: Colors.white),
         ),
-        iconTheme: const IconThemeData(color: Colors.white),
         backgroundColor: Colors.deepPurple,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+        padding: const EdgeInsets.all(24),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Car: ${widget.carData['name']}',
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-              ),
+              Text('Car: ${widget.carData['name']}', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
               const SizedBox(height: 4),
-              Text(
-                'Price per day: \$${pricePerDay.toStringAsFixed(2)}',
-                style: TextStyle(fontSize: 16, color: Colors.grey[700]),
-              ),
+              Text('Price per day: \$${pricePerDay.toStringAsFixed(2)}', style: TextStyle(fontSize: 16, color: Colors.grey[700])),
               const SizedBox(height: 24),
 
+              // Input fields
               Card(
                 elevation: 3,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -165,8 +195,7 @@ class _RentalPageState extends State<RentalPage> {
                           prefixIcon: Icon(Icons.person),
                           border: OutlineInputBorder(),
                         ),
-                        validator: (value) =>
-                            value == null || value.isEmpty ? 'Enter your name' : null,
+                        validator: (value) => value == null || value.trim().isEmpty ? 'Enter your name' : null,
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
@@ -177,8 +206,7 @@ class _RentalPageState extends State<RentalPage> {
                           prefixIcon: Icon(Icons.phone),
                           border: OutlineInputBorder(),
                         ),
-                        validator: (value) =>
-                            value == null || value.isEmpty ? 'Enter contact number' : null,
+                        validator: (value) => value == null || value.trim().isEmpty ? 'Enter contact number' : null,
                       ),
                     ],
                   ),
@@ -187,11 +215,12 @@ class _RentalPageState extends State<RentalPage> {
 
               const SizedBox(height: 24),
 
+              // Date pickers
               Card(
                 elevation: 3,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+                  padding: const EdgeInsets.all(16),
                   child: Column(
                     children: [
                       OutlinedButton.icon(
@@ -199,13 +228,10 @@ class _RentalPageState extends State<RentalPage> {
                         label: Text(
                           _startDate == null
                               ? 'Select Start Date'
-                              : 'Start Date: ${DateFormat('yyyy-MM-dd').format(_startDate!)}',
-                          style: const TextStyle(fontSize: 16),
+                              : 'Start: ${DateFormat('yyyy-MM-dd').format(_startDate!)}',
                         ),
                         onPressed: () => _pickDate(context, true),
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: const Size.fromHeight(48),
-                        ),
+                        style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
                       ),
                       const SizedBox(height: 12),
                       OutlinedButton.icon(
@@ -213,19 +239,17 @@ class _RentalPageState extends State<RentalPage> {
                         label: Text(
                           _endDate == null
                               ? 'Select End Date'
-                              : 'End Date: ${DateFormat('yyyy-MM-dd').format(_endDate!)}',
-                          style: const TextStyle(fontSize: 16),
+                              : 'End: ${DateFormat('yyyy-MM-dd').format(_endDate!)}',
                         ),
                         onPressed: _startDate == null ? null : () => _pickDate(context, false),
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: const Size.fromHeight(48),
-                        ),
+                        style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
                       ),
                     ],
                   ),
                 ),
               ),
 
+              // Total Price Card
               if (_totalPrice != null) ...[
                 const SizedBox(height: 24),
                 Card(
@@ -233,29 +257,17 @@ class _RentalPageState extends State<RentalPage> {
                   elevation: 2,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                    padding: const EdgeInsets.all(16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Price Per Day: \$${pricePerDay.toStringAsFixed(2)}',
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                        if (_startDate != null && _endDate != null) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            'Total Days: ${_endDate!.difference(_startDate!).inDays + 1}',
-                            style: const TextStyle(fontSize: 16),
-                          ),
-                        ],
+                        Text('Price Per Day: \$${pricePerDay.toStringAsFixed(2)}'),
+                        const SizedBox(height: 4),
+                        Text('Total Days: ${_endDate!.difference(_startDate!).inDays + 1}'),
                         const SizedBox(height: 8),
                         Text(
                           'Total Price: \$${_totalPrice!.toStringAsFixed(2)}',
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.green,
-                          ),
+                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.green),
                         ),
                       ],
                     ),
@@ -265,26 +277,17 @@ class _RentalPageState extends State<RentalPage> {
 
               const SizedBox(height: 32),
 
+              // Submit Button
               SizedBox(
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton.icon(
                   onPressed: _submitBooking,
                   icon: const Icon(Icons.send, color: Colors.white),
-                  label: const Text(
-                    'Submit Rental',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
+                  label: const Text('Submit Rental', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.deepPurple,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 5,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
               ),
