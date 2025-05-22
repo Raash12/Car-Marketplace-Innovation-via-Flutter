@@ -36,7 +36,7 @@ class PdfRentalInvoiceService {
                     children: [
                       pw.Text('Car Marketplace Inc.',
                           style: pw.TextStyle(fontSize: 22, fontWeight: pw.FontWeight.bold)),
-                      pw.Text('123 Auto Lane, Speed City'),
+                      pw.Text('123 Auto Lane, Moqdisho somalia'),
                       pw.Text('Email: support@carmarketplace.com'),
                     ],
                   ),
