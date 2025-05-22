@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import 'pdf_rental_invoice_service.dart';
 
 class RentalPage extends StatefulWidget {
   final Map<String, dynamic> carData;
@@ -75,36 +74,6 @@ class _RentalPageState extends State<RentalPage> {
     }
   }
 
-  Future<void> _generateInvoicePdf(Map<String, dynamic> data) async {
-    final pdf = pw.Document();
-
-    pdf.addPage(
-      pw.Page(
-        build: (context) => pw.Padding(
-          padding: const pw.EdgeInsets.all(24),
-          child: pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Text('Rental Invoice', style: pw.TextStyle(fontSize: 28, fontWeight: pw.FontWeight.bold)),
-              pw.SizedBox(height: 20),
-              pw.Text('Customer Name: ${data['name']}'),
-              pw.Text('Contact Number: ${data['contact']}'),
-              pw.Text('Car Name: ${data['carName']}'),
-              pw.Text('Price Per Day: \$${data['rentPrice']}'),
-              pw.Text('Rental Days: ${data['days']}'),
-              pw.Text('Start Date: ${DateFormat('yyyy-MM-dd').format((data['startDate'] as Timestamp).toDate())}'),
-              pw.Text('End Date: ${DateFormat('yyyy-MM-dd').format((data['endDate'] as Timestamp).toDate())}'),
-              pw.SizedBox(height: 12),
-              pw.Text('Total Price: \$${data['totalPrice'].toStringAsFixed(2)}', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
-            ],
-          ),
-        ),
-      ),
-    );
-
-    await Printing.layoutPdf(onLayout: (format) async => pdf.save());
-  }
-
   Future<void> _submitBooking() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -133,15 +102,20 @@ class _RentalPageState extends State<RentalPage> {
       'days': rentalDays,
       'name': _nameController.text.trim(),
       'contact': _contactController.text.trim(),
-      'startDate': Timestamp.fromDate(_startDate!),
-      'endDate': Timestamp.fromDate(_endDate!),
+      'startDate': _startDate!,
+      'endDate': _endDate!,
       'createdAt': Timestamp.now(),
     };
 
     try {
-      await FirebaseFirestore.instance.collection('rental').add(rentalData);
+      await FirebaseFirestore.instance.collection('rental').add({
+        ...rentalData,
+        'startDate': Timestamp.fromDate(_startDate!),
+        'endDate': Timestamp.fromDate(_endDate!),
+      });
 
-      await _generateInvoicePdf(rentalData); // generate PDF after booking
+      final pdfBytes = await PdfRentalInvoiceService().generateRentalInvoicePdf(rentalData);
+      await Printing.layoutPdf(onLayout: (format) async => pdfBytes);
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Rental booked for \$${totalPrice.toStringAsFixed(2)}')),
@@ -161,12 +135,8 @@ class _RentalPageState extends State<RentalPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          "Book Rental",
-          style: TextStyle(fontWeight: FontWeight.bold,  color: Colors.white),
-        ),
+        title: const Text("Book Rental", style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.deepPurple,
-        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -176,120 +146,45 @@ class _RentalPageState extends State<RentalPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Car: ${widget.carData['name']}', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 4),
-              Text('Price per day: \$${pricePerDay.toStringAsFixed(2)}', style: TextStyle(fontSize: 16, color: Colors.grey[700])),
+              const SizedBox(height: 8),
+              Text('Price per day: \$${pricePerDay.toStringAsFixed(2)}', style: TextStyle(color: Colors.grey[700])),
               const SizedBox(height: 24),
-
-              // Input fields
-              Card(
-                elevation: 3,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      TextFormField(
-                        controller: _nameController,
-                        decoration: const InputDecoration(
-                          labelText: 'Your Name',
-                          prefixIcon: Icon(Icons.person),
-                          border: OutlineInputBorder(),
-                        ),
-                        validator: (value) => value == null || value.trim().isEmpty ? 'Enter your name' : null,
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _contactController,
-                        keyboardType: TextInputType.phone,
-                        decoration: const InputDecoration(
-                          labelText: 'Contact Number',
-                          prefixIcon: Icon(Icons.phone),
-                          border: OutlineInputBorder(),
-                        ),
-                        validator: (value) => value == null || value.trim().isEmpty ? 'Enter contact number' : null,
-                      ),
-                    ],
-                  ),
-                ),
+              TextFormField(
+                controller: _nameController,
+                decoration: const InputDecoration(labelText: 'Name', border: OutlineInputBorder()),
+                validator: (value) => value == null || value.trim().isEmpty ? 'Enter your name' : null,
               ),
-
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _contactController,
+                decoration: const InputDecoration(labelText: 'Contact Number', border: OutlineInputBorder()),
+                validator: (value) => value == null || value.trim().isEmpty ? 'Enter your contact' : null,
+              ),
               const SizedBox(height: 24),
-
-              // Date pickers
-              Card(
-                elevation: 3,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      OutlinedButton.icon(
-                        icon: const Icon(Icons.calendar_today),
-                        label: Text(
-                          _startDate == null
-                              ? 'Select Start Date'
-                              : 'Start: ${DateFormat('yyyy-MM-dd').format(_startDate!)}',
-                        ),
-                        onPressed: () => _pickDate(context, true),
-                        style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
-                      ),
-                      const SizedBox(height: 12),
-                      OutlinedButton.icon(
-                        icon: const Icon(Icons.calendar_today),
-                        label: Text(
-                          _endDate == null
-                              ? 'Select End Date'
-                              : 'End: ${DateFormat('yyyy-MM-dd').format(_endDate!)}',
-                        ),
-                        onPressed: _startDate == null ? null : () => _pickDate(context, false),
-                        style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
-                      ),
-                    ],
-                  ),
-                ),
+              OutlinedButton.icon(
+                icon: const Icon(Icons.calendar_today),
+                label: Text(_startDate == null
+                    ? 'Select Start Date'
+                    : 'Start: ${DateFormat('yyyy-MM-dd').format(_startDate!)}'),
+                onPressed: () => _pickDate(context, true),
               ),
-
-              // Total Price Card
-              if (_totalPrice != null) ...[
-                const SizedBox(height: 24),
-                Card(
-                  color: Colors.green[50],
-                  elevation: 2,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Price Per Day: \$${pricePerDay.toStringAsFixed(2)}'),
-                        const SizedBox(height: 4),
-                        Text('Total Days: ${_endDate!.difference(_startDate!).inDays + 1}'),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Total Price: \$${_totalPrice!.toStringAsFixed(2)}',
-                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.green),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-
-              const SizedBox(height: 32),
-
-              // Submit Button
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton.icon(
-                  onPressed: _submitBooking,
-                  icon: const Icon(Icons.send, color: Colors.white),
-                  label: const Text('Submit Rental', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.deepPurple,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                icon: const Icon(Icons.calendar_today),
+                label: Text(_endDate == null
+                    ? 'Select End Date'
+                    : 'End: ${DateFormat('yyyy-MM-dd').format(_endDate!)}'),
+                onPressed: _startDate == null ? null : () => _pickDate(context, false),
+              ),
+              const SizedBox(height: 24),
+              if (_totalPrice != null)
+                Text('Total Price: \$${_totalPrice!.toStringAsFixed(2)}',
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: _submitBooking,
+                style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(50)),
+                child: const Text('Book Rental & Generate Invoice'),
               ),
             ],
           ),
