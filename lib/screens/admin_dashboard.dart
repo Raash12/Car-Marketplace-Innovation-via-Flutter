@@ -88,6 +88,64 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   @override
   Widget build(BuildContext context) {
+    // Combine all 7 cards here:
+    final List<Widget> cards = [
+      _buildStatCard(
+        icon: Icons.directions_car_filled,
+        title: 'Total Cars',
+        count: totalCars.toString(),
+        color: Colors.lightBlueAccent,
+      ),
+      _buildStatCard(
+        icon: Icons.car_rental,
+        title: 'Total Rentals',
+        count: totalRentals.toString(),
+        color: Colors.deepPurpleAccent,
+      ),
+      _buildStatCard(
+        icon: Icons.shopping_cart,
+        title: 'Total Buys',
+        count: totalBuys.toString(),
+        color: Colors.orangeAccent,
+      ),
+      _buildQuickAction(
+        icon: Icons.add_circle_outline,
+        label: 'Add Car',
+        color: Colors.green,
+        onTap: () {
+          Navigator.push(
+              context, MaterialPageRoute(builder: (context) => const AddCarPage()));
+        },
+      ),
+      _buildQuickAction(
+        icon: Icons.directions_car,
+        label: 'View Cars',
+        color: Colors.blue,
+        onTap: () {
+          Navigator.push(
+              context, MaterialPageRoute(builder: (context) => const ViewCarPage()));
+        },
+      ),
+      _buildQuickAction(
+        icon: Icons.analytics,
+        label: 'Rental Reports',
+        color: Colors.purple,
+        onTap: () {
+          Navigator.push(context,
+              MaterialPageRoute(builder: (context) => const RentalReportWidget()));
+        },
+      ),
+      _buildQuickAction(
+        icon: Icons.receipt_long,
+        label: 'Buy Reports',
+        color: Colors.teal,
+        onTap: () {
+          Navigator.push(context,
+              MaterialPageRoute(builder: (context) => const BuyReportWidget()));
+        },
+      ),
+    ];
+
     return Scaffold(
       backgroundColor: Colors.white,
       drawer: _buildDrawer(),
@@ -109,8 +167,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                    builder: (context) => const FeedbackReportPage()),
+                MaterialPageRoute(builder: (context) => const FeedbackReportPage()),
               );
             },
           ),
@@ -127,15 +184,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     ? const Center(
                         child: Text(
                           'No images available.',
-                          style:
-                              TextStyle(fontSize: 18, color: Colors.black54),
+                          style: TextStyle(fontSize: 18, color: Colors.black54),
                         ),
                       )
                     : PageView.builder(
                         controller: _pageController,
                         itemCount: imagePaths.length,
-                        onPageChanged: (index) =>
-                            setState(() => _currentPage = index),
+                        onPageChanged: (index) => setState(() => _currentPage = index),
                         itemBuilder: (context, index) {
                           final imagePath = imagePaths[index];
                           return AnimatedBuilder(
@@ -149,8 +204,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                               return Transform.scale(scale: value, child: child);
                             },
                             child: Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 12.0),
+                              padding: const EdgeInsets.symmetric(horizontal: 12.0),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(16),
                                 child: Stack(
@@ -202,9 +256,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       ),
               ),
               const SizedBox(height: 24),
-              _buildStatsSection(),
+
+              // Here is your card grid with 3 per row and last card full width if alone:
+              _buildCardGridFlexible(cards),
+
               const SizedBox(height: 16),
-              _buildQuickActions(),
             ],
           ),
         ),
@@ -212,94 +268,30 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  Widget _buildStatsSection() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Quick Stats',
-              style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.deepPurple)),
-          const SizedBox(height: 12),
-          SizedBox(
-            height: 120,
-            child: GridView.count(
-              crossAxisCount: 3,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 13,
-              physics: const NeverScrollableScrollPhysics(),
-              children: [
-                _buildStatCard(
-                    icon: Icons.directions_car_filled,
-                    title: 'Total Cars',
-                    count: totalCars.toString(),
-                    color: Colors.lightBlueAccent),
-                _buildStatCard(
-                    icon: Icons.car_rental,
-                    title: 'Total Rentals',
-                    count: totalRentals.toString(),
-                    color: Colors.deepPurpleAccent),
-                _buildStatCard(
-                    icon: Icons.shopping_cart,
-                    title: 'Total Buys',
-                    count: totalBuys.toString(),
-                    color: Colors.orangeAccent),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget _buildCardGridFlexible(List<Widget> cards) {
+    final width = MediaQuery.of(context).size.width;
+    final horizontalPadding = 24 * 2; // padding on left and right
+    final spacing = 16 * 2; // two gaps between 3 cards per row
+    final cardWidth = (width - horizontalPadding - spacing) / 3;
 
-  Widget _buildQuickActions() {
+    List<Widget> cardWidgets = [];
+
+    for (int i = 0; i < cards.length; i++) {
+      final isLastSingle = (i == cards.length - 1) && (cards.length % 3 != 0);
+      cardWidgets.add(
+        SizedBox(
+          width: isLastSingle ? (width - horizontalPadding) : cardWidth,
+          child: cards[i],
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: SizedBox(
-        height: 120,
-        child: GridView.count(
-          crossAxisCount: 4,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-          physics: const NeverScrollableScrollPhysics(),
-          children: [
-            _buildQuickAction(
-                icon: Icons.add_circle_outline,
-                label: 'Add Car',
-                color: Colors.green,
-                onTap: () {
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (context) => const AddCarPage()));
-                }),
-            _buildQuickAction(
-                icon: Icons.directions_car,
-                label: 'View Cars',
-                color: Colors.blue,
-                onTap: () {
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (context) => const ViewCarPage()));
-                }),
-            _buildQuickAction(
-                icon: Icons.analytics,
-                label: 'Rental Reports',
-                color: Colors.purple,
-                onTap: () {
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (context) => const RentalReportWidget()));
-                }),
-            _buildQuickAction(
-                icon: Icons.receipt_long,
-                label: 'Buy Reports',
-                color: Colors.teal,
-                onTap: () {
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (context) => const BuyReportWidget()));
-                }),
-          ],
-        ),
+      child: Wrap(
+        spacing: 16,
+        runSpacing: 16,
+        children: cardWidgets,
       ),
     );
   }
@@ -313,23 +305,38 @@ class _AdminDashboardState extends State<AdminDashboard> {
     return InkWell(
       borderRadius: BorderRadius.circular(12),
       child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
           color: color.withOpacity(0.1),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.3), width: 1),
+          border: Border.all(color: color.withOpacity(0.3)),
         ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 32, color: color),
-            const SizedBox(height: 8),
-            Text(count,
-                style: TextStyle(
-                    fontSize: 20, fontWeight: FontWeight.bold, color: color)),
+            CircleAvatar(
+              radius: 20,
+              backgroundColor: color,
+              child: Icon(icon, color: Colors.white, size: 24),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              count,
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
             const SizedBox(height: 4),
-            Text(title,
-                style: TextStyle(
-                    fontSize: 14, fontWeight: FontWeight.w600, color: color)),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 14,
+                color: color.withOpacity(0.7),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ],
         ),
       ),
@@ -343,99 +350,70 @@ class _AdminDashboardState extends State<AdminDashboard> {
     required VoidCallback onTap,
   }) {
     return InkWell(
-      onTap: onTap,
       borderRadius: BorderRadius.circular(12),
+      onTap: onTap,
       child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 20),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withOpacity(0.15),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.3), width: 1),
+          border: Border.all(color: color.withOpacity(0.3)),
         ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 32, color: color),
-            const SizedBox(height: 8),
-            Text(label,
-                style: TextStyle(
-                    fontSize: 14, fontWeight: FontWeight.bold, color: color)),
+            CircleAvatar(
+              radius: 22,
+              backgroundColor: color,
+              child: Icon(icon, color: Colors.white, size: 26),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 16,
+                color: color.withOpacity(0.7),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildDrawerItem(IconData icon, String title, VoidCallback onTap) {
-    return ListTile(
-      leading: Icon(icon, color: Colors.deepPurple),
-      title: Text(title, style: const TextStyle(color: Colors.deepPurple)),
-      onTap: onTap,
-    );
-  }
-
   Widget _buildDrawer() {
     return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          DrawerHeader(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFF673AB7), Color(0xFF673AB7)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+      child: Container(
+        color: Colors.white,
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            const DrawerHeader(
+              decoration: BoxDecoration(color: Colors.deepPurple),
+              child: Center(
+                child: Text(
+                  'Admin Panel',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ),
-            child: const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CircleAvatar(
-                    radius: 32, backgroundImage: AssetImage('image/profile.jpg')),
-                SizedBox(height: 12),
-                Text('Admin Panel',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold)),
-                Text('admin@gmail.com',
-                    style: TextStyle(color: Colors.white70, fontSize: 14)),
-              ],
+            ListTile(
+              leading: const Icon(Icons.logout, color: Colors.deepPurple),
+              title: const Text('Logout'),
+              onTap: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) =>  LoginScreen()),
+                );
+              },
             ),
-          ),
-          _buildDrawerItem(Icons.dashboard, 'Dashboard', () => Navigator.pop(context)),
-          _buildDrawerItem(Icons.add_circle, 'Add Cars', () {
-            Navigator.pop(context);
-            Navigator.push(context,
-                MaterialPageRoute(builder: (context) => const AddCarPage()));
-          }),
-          _buildDrawerItem(Icons.directions_car, 'View Cars', () {
-            Navigator.pop(context);
-            Navigator.push(context,
-                MaterialPageRoute(builder: (context) => const ViewCarPage()));
-          }),
-          _buildDrawerItem(Icons.analytics, ' Rental Reports', () {
-            Navigator.pop(context);
-            Navigator.push(context,
-                MaterialPageRoute(builder: (context) => const RentalReportWidget()));
-          }),
-          _buildDrawerItem(Icons.receipt_long, 'Buy Reports', () {
-            Navigator.pop(context);
-            Navigator.push(context,
-                MaterialPageRoute(builder: (context) => const BuyReportWidget()));
-          }),
-          _buildDrawerItem(Icons.feedback, 'Feedback Report', () {
-            Navigator.pop(context);
-            Navigator.push(context,
-                MaterialPageRoute(builder: (context) => const FeedbackReportPage()));
-          }),
-          const Divider(),
-          _buildDrawerItem(Icons.logout, 'Logout', () {
-            Navigator.pop(context);
-            Navigator.pushReplacement(context,
-                MaterialPageRoute(builder: (context) => LoginScreen()));
-          }),
-        ],
+          ],
+        ),
       ),
     );
   }
