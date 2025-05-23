@@ -1,3 +1,4 @@
+import 'package:carmarketplace/screens/buy_report.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -9,7 +10,7 @@ import 'package:carmarketplace/screens/addcar.dart';
 import 'package:carmarketplace/screens/viewcar.dart';
 import 'package:carmarketplace/screens/viewcar_user.dart';
 
-import 'package:carmarketplace/screens/Report.dart';
+import 'package:carmarketplace/screens/rental_report.dart';
 import 'package:carmarketplace/screens/feedbackreport.dart';
 
 void main() async {
@@ -39,8 +40,9 @@ class MyApp extends StatelessWidget {
         '/addCar': (context) => const AddCarPage(),
         '/viewCars': (context) => const ViewCarPage(),
         '/viewCarUser': (context) => const ViewUserCarPage(),
-        '/Report': (context) => const  ReportsPage(),
         '/feedbackReport': (context) => const FeedbackReportPage(),
+          '/rentalReport': (context) => const RentalReportWidget(),  // Add rental report route
+        '/buyReport': (context) => const BuyReportWidget(), 
       },
     );
   }

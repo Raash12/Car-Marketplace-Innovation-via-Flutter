@@ -20,9 +20,12 @@ dependencies:
   firebase_storage: ^12.4.5
   http: ^0.13.6
   intl: ^0.18.1
+
+  pdf: ^3.10.4
+  printing: ^5.11.0
+  excel: ^2.0.5
+  path_provider: ^2.1.2
   
-  pdf: ^3.10.4          # <-- Add this for PDF generation
-  printing: ^5.11.0     # <-- Add this for sharing and printing PDF
 
 dev_dependencies:
   flutter_test:

@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:carmarketplace/screens/viewcar.dart';
 import 'package:carmarketplace/screens/addcar.dart';
-import 'package:carmarketplace/screens/Report.dart';
+import 'package:carmarketplace/screens/rental_report.dart';
 import 'package:carmarketplace/screens/login_screen.dart';
 import 'package:carmarketplace/screens/feedbackreport.dart';
+import 'package:carmarketplace/screens/buy_report.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -14,8 +15,16 @@ class AdminDashboard extends StatefulWidget {
 }
 
 class _AdminDashboardState extends State<AdminDashboard> {
-  final List<String> imagePaths = ['image/car0.jpg', 'image/car00.jpg', 'image/car000.jpg'];
-  final List<String> titles = ['Luxury Ride', 'Performance Beast', 'Eco-Friendly Drive'];
+  final List<String> imagePaths = [
+    'image/car0.jpg',
+    'image/car00.jpg',
+    'image/car000.jpg'
+  ];
+  final List<String> titles = [
+    'Luxury Ride',
+    'Performance Beast',
+    'Eco-Friendly Drive'
+  ];
   final List<String> descriptions = [
     'Experience unmatched comfort and class.',
     'Power and speed blended with style.',
@@ -100,7 +109,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const FeedbackReportPage()),
+                MaterialPageRoute(
+                    builder: (context) => const FeedbackReportPage()),
               );
             },
           ),
@@ -114,11 +124,18 @@ class _AdminDashboardState extends State<AdminDashboard> {
               AspectRatio(
                 aspectRatio: 16 / 9,
                 child: imagePaths.isEmpty
-                    ? const Center(child: Text('No images available.', style: TextStyle(fontSize: 18, color: Colors.black54)))
+                    ? const Center(
+                        child: Text(
+                          'No images available.',
+                          style:
+                              TextStyle(fontSize: 18, color: Colors.black54),
+                        ),
+                      )
                     : PageView.builder(
                         controller: _pageController,
                         itemCount: imagePaths.length,
-                        onPageChanged: (index) => setState(() => _currentPage = index),
+                        onPageChanged: (index) =>
+                            setState(() => _currentPage = index),
                         itemBuilder: (context, index) {
                           final imagePath = imagePaths[index];
                           return AnimatedBuilder(
@@ -132,7 +149,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                               return Transform.scale(scale: value, child: child);
                             },
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 12.0),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(16),
                                 child: Stack(
@@ -200,7 +218,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Quick Stats', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.deepPurple)),
+          Text('Quick Stats',
+              style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.deepPurple)),
           const SizedBox(height: 12),
           SizedBox(
             height: 120,
@@ -210,9 +232,21 @@ class _AdminDashboardState extends State<AdminDashboard> {
               mainAxisSpacing: 13,
               physics: const NeverScrollableScrollPhysics(),
               children: [
-                _buildStatCard(icon: Icons.directions_car_filled, title: 'Total Cars', count: totalCars.toString(), color: Colors.lightBlueAccent),
-                _buildStatCard(icon: Icons.car_rental, title: 'Total Rentals', count: totalRentals.toString(), color: Colors.deepPurpleAccent),
-                _buildStatCard(icon: Icons.shopping_cart, title: 'Total Buys', count: totalBuys.toString(), color: Colors.orangeAccent),
+                _buildStatCard(
+                    icon: Icons.directions_car_filled,
+                    title: 'Total Cars',
+                    count: totalCars.toString(),
+                    color: Colors.lightBlueAccent),
+                _buildStatCard(
+                    icon: Icons.car_rental,
+                    title: 'Total Rentals',
+                    count: totalRentals.toString(),
+                    color: Colors.deepPurpleAccent),
+                _buildStatCard(
+                    icon: Icons.shopping_cart,
+                    title: 'Total Buys',
+                    count: totalBuys.toString(),
+                    color: Colors.orangeAccent),
               ],
             ),
           ),
@@ -227,20 +261,43 @@ class _AdminDashboardState extends State<AdminDashboard> {
       child: SizedBox(
         height: 120,
         child: GridView.count(
-          crossAxisCount: 3,
+          crossAxisCount: 4,
           crossAxisSpacing: 16,
           mainAxisSpacing: 16,
           physics: const NeverScrollableScrollPhysics(),
           children: [
-            _buildQuickAction(icon: Icons.add_circle_outline, label: 'Add Car', color: Colors.green, onTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const AddCarPage()));
-            }),
-            _buildQuickAction(icon: Icons.directions_car, label: 'View Cars', color: Colors.blue, onTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const ViewCarPage()));
-            }),
-            _buildQuickAction(icon: Icons.analytics, label: 'Reports', color: Colors.purple, onTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const ReportsPage()));
-            }),
+            _buildQuickAction(
+                icon: Icons.add_circle_outline,
+                label: 'Add Car',
+                color: Colors.green,
+                onTap: () {
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => const AddCarPage()));
+                }),
+            _buildQuickAction(
+                icon: Icons.directions_car,
+                label: 'View Cars',
+                color: Colors.blue,
+                onTap: () {
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => const ViewCarPage()));
+                }),
+            _buildQuickAction(
+                icon: Icons.analytics,
+                label: 'Rental Reports',
+                color: Colors.purple,
+                onTap: () {
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => const RentalReportWidget()));
+                }),
+            _buildQuickAction(
+                icon: Icons.receipt_long,
+                label: 'Buy Reports',
+                color: Colors.teal,
+                onTap: () {
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => const BuyReportWidget()));
+                }),
           ],
         ),
       ),
@@ -266,9 +323,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
           children: [
             Icon(icon, size: 32, color: color),
             const SizedBox(height: 8),
-            Text(count, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)),
+            Text(count,
+                style: TextStyle(
+                    fontSize: 20, fontWeight: FontWeight.bold, color: color)),
             const SizedBox(height: 4),
-            Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: color)),
+            Text(title,
+                style: TextStyle(
+                    fontSize: 14, fontWeight: FontWeight.w600, color: color)),
           ],
         ),
       ),
@@ -295,7 +356,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
           children: [
             Icon(icon, size: 32, color: color),
             const SizedBox(height: 8),
-            Text(label, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: color)),
+            Text(label,
+                style: TextStyle(
+                    fontSize: 14, fontWeight: FontWeight.bold, color: color)),
           ],
         ),
       ),
@@ -327,34 +390,50 @@ class _AdminDashboardState extends State<AdminDashboard> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                CircleAvatar(radius: 32, backgroundImage: AssetImage('image/profile.jpg')),
+                CircleAvatar(
+                    radius: 32, backgroundImage: AssetImage('image/profile.jpg')),
                 SizedBox(height: 12),
-                Text('Admin Panel', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
-                Text('admin@gmail.com', style: TextStyle(color: Colors.white70, fontSize: 14)),
+                Text('Admin Panel',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold)),
+                Text('admin@gmail.com',
+                    style: TextStyle(color: Colors.white70, fontSize: 14)),
               ],
             ),
           ),
           _buildDrawerItem(Icons.dashboard, 'Dashboard', () => Navigator.pop(context)),
           _buildDrawerItem(Icons.add_circle, 'Add Cars', () {
             Navigator.pop(context);
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const AddCarPage()));
+            Navigator.push(context,
+                MaterialPageRoute(builder: (context) => const AddCarPage()));
           }),
           _buildDrawerItem(Icons.directions_car, 'View Cars', () {
             Navigator.pop(context);
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const ViewCarPage()));
+            Navigator.push(context,
+                MaterialPageRoute(builder: (context) => const ViewCarPage()));
           }),
-          _buildDrawerItem(Icons.analytics, 'Reports', () {
+          _buildDrawerItem(Icons.analytics, ' Rental Reports', () {
             Navigator.pop(context);
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const ReportsPage()));
+            Navigator.push(context,
+                MaterialPageRoute(builder: (context) => const RentalReportWidget()));
+          }),
+          _buildDrawerItem(Icons.receipt_long, 'Buy Reports', () {
+            Navigator.pop(context);
+            Navigator.push(context,
+                MaterialPageRoute(builder: (context) => const BuyReportWidget()));
           }),
           _buildDrawerItem(Icons.feedback, 'Feedback Report', () {
             Navigator.pop(context);
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const FeedbackReportPage()));
+            Navigator.push(context,
+                MaterialPageRoute(builder: (context) => const FeedbackReportPage()));
           }),
           const Divider(),
           _buildDrawerItem(Icons.logout, 'Logout', () {
             Navigator.pop(context);
-            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LoginScreen()));
+            Navigator.pushReplacement(context,
+                MaterialPageRoute(builder: (context) => LoginScreen()));
           }),
         ],
       ),
