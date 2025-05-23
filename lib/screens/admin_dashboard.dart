@@ -88,7 +88,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   @override
   Widget build(BuildContext context) {
-    // Combine all 7 cards here:
+    // Your 7 cards
     final List<Widget> cards = [
       _buildStatCard(
         icon: Icons.directions_car_filled,
@@ -148,7 +148,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      drawer: _buildDrawer(),
+      drawer: _buildDrawer(), // Your sidebar restored
       appBar: AppBar(
         title: const Text('Car Marketplace Admin'),
         centerTitle: true,
@@ -257,7 +257,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               ),
               const SizedBox(height: 24),
 
-              // Here is your card grid with 3 per row and last card full width if alone:
+              // Cards layout with 3 per row, last card full width if single in last row
               _buildCardGridFlexible(cards),
 
               const SizedBox(height: 16),
@@ -270,8 +270,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   Widget _buildCardGridFlexible(List<Widget> cards) {
     final width = MediaQuery.of(context).size.width;
-    final horizontalPadding = 24 * 2; // padding on left and right
-    final spacing = 16 * 2; // two gaps between 3 cards per row
+    final horizontalPadding = 24 * 2; // same padding as body horizontal
+    final spacing = 16 * 2; // two gaps between 3 cards
     final cardWidth = (width - horizontalPadding - spacing) / 3;
 
     List<Widget> cardWidgets = [];
