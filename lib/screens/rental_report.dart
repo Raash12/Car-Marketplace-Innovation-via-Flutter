@@ -11,149 +11,143 @@ class RentalReportWidget extends StatefulWidget {
 
 class _RentalReportWidgetState extends State<RentalReportWidget> {
   final DateFormat _dateFormat = DateFormat('yyyy-MM-dd');
-
   DateTime? _startDate;
   DateTime? _endDate;
-
+  String _searchQuery = '';
   int? _sortColumnIndex;
   bool _sortAscending = true;
 
-  List<QueryDocumentSnapshot> _filteredDocs = [];
   List<QueryDocumentSnapshot> _allDocs = [];
+  List<QueryDocumentSnapshot> _filteredDocs = [];
 
   final TextEditingController _searchController = TextEditingController();
-  String _searchQuery = '';
 
-  Future<void> _pickStartDate() async {
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    setState(() => _searchQuery = _searchController.text);
+    _applyFilterAndSort();
+  }
+
+  Future<void> _pickDate(BuildContext context, bool isStartDate) async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: _startDate ?? DateTime.now(),
+      initialDate: isStartDate ? _startDate ?? DateTime.now() : _endDate ?? DateTime.now(),
       firstDate: DateTime(2000),
-      lastDate: _endDate ?? DateTime.now(),
-      builder: (context, child) {
-        return Theme(
-          data: ThemeData.dark().copyWith(
-            colorScheme: ColorScheme.dark(
-              primary: Colors.deepPurple,
-              onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: Colors.deepPurple,
-            ),
-            dialogBackgroundColor: Colors.white,
-          ),
-          child: child!,
-        );
-      },
-    );
-    if (picked != null) {
-      setState(() {
-        _startDate = picked;
-      });
-      _applyFilterAndSort();
-    }
-  }
-
-  Future<void> _pickEndDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _endDate ?? DateTime.now(),
-      firstDate: _startDate ?? DateTime(2000),
       lastDate: DateTime.now(),
-      builder: (context, child) {
-        return Theme(
-          data: ThemeData.dark().copyWith(
-            colorScheme: ColorScheme.dark(
-              primary: Colors.deepPurple,
-              onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: Colors.deepPurple,
-            ),
-            dialogBackgroundColor: Colors.white,
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: ColorScheme.light(
+            primary: Colors.deepPurple,
+            onPrimary: Colors.white,
+            onSurface: Colors.deepPurple,
           ),
-          child: child!,
-        );
-      },
+          textButtonTheme: TextButtonThemeData(
+            style: TextButton.styleFrom(foregroundColor: Colors.deepPurple),
+          ),
+        ),
+        child: child!,
+      ),
     );
     if (picked != null) {
       setState(() {
-        _endDate = picked;
+        if (isStartDate) {
+          _startDate = picked;
+        } else {
+          _endDate = picked;
+        }
       });
       _applyFilterAndSort();
     }
   }
 
-  String formatTimestamp(Timestamp? ts) {
-    if (ts == null) return '-';
-    return _dateFormat.format(ts.toDate());
+  String _formatCurrency(num? value) {
+    return value?.toStringAsFixed(2) ?? '0.00';
+  }
+
+  String _formatTimestamp(Timestamp? ts) {
+    return ts != null ? _dateFormat.format(ts.toDate()) : '-';
   }
 
   void _applyFilterAndSort() {
-    List<QueryDocumentSnapshot> temp = _allDocs.where((doc) {
+    List<QueryDocumentSnapshot> docs = _allDocs.where((doc) {
       final data = doc.data() as Map<String, dynamic>;
+      final date = (data['startDate'] as Timestamp?)?.toDate();
 
-      // Filter by startDate field
-      final Timestamp? startTimestamp = data['startDate'];
-      if (startTimestamp == null) return false;
-      final date = startTimestamp.toDate();
+      if (_startDate != null && date != null && date.isBefore(_startDate!)) return false;
+      if (_endDate != null && date != null && date.isAfter(_endDate!)) return false;
 
-      if (_startDate != null && date.isBefore(_startDate!)) return false;
-      if (_endDate != null && date.isAfter(_endDate!)) return false;
-
-      // Filter by search query (carName or name)
-      final carName = data['carName']?.toString().toLowerCase() ?? '';
-      final customerName = data['name']?.toString().toLowerCase() ?? '';
       if (_searchQuery.isNotEmpty) {
-        if (!carName.contains(_searchQuery.toLowerCase()) &&
+        final carName = data['carName']?.toString().toLowerCase() ?? '';
+        final customerName = data['name']?.toString().toLowerCase() ?? '';
+        if (!carName.contains(_searchQuery.toLowerCase()) && 
             !customerName.contains(_searchQuery.toLowerCase())) {
           return false;
         }
       }
-
       return true;
     }).toList();
 
     if (_sortColumnIndex != null) {
-      temp.sort((a, b) {
+      docs.sort((a, b) {
         final aData = a.data() as Map<String, dynamic>;
         final bData = b.data() as Map<String, dynamic>;
 
-        int cmp;
-
         switch (_sortColumnIndex) {
           case 0:
-            cmp = aData['carName'].toString().compareTo(bData['carName'].toString());
-            break;
+            return _sortAscending
+                ? (aData['carName'] ?? '').compareTo(bData['carName'] ?? '')
+                : (bData['carName'] ?? '').compareTo(aData['carName'] ?? '');
           case 1:
-            cmp = aData['name'].toString().compareTo(bData['name'].toString());
-            break;
+            return _sortAscending
+                ? (aData['name'] ?? '').compareTo(bData['name'] ?? '')
+                : (bData['name'] ?? '').compareTo(aData['name'] ?? '');
           case 2:
-            cmp = aData['contact'].toString().compareTo(bData['contact'].toString());
-            break;
+            return _sortAscending
+                ? (aData['contact'] ?? '').compareTo(bData['contact'] ?? '')
+                : (bData['contact'] ?? '').compareTo(aData['contact'] ?? '');
           case 3:
-            cmp = (aData['rentPrice'] as num).compareTo(bData['rentPrice'] as num);
-            break;
+            return _sortAscending
+                ? ((aData['rentPrice'] as num?) ?? 0).compareTo((bData['rentPrice'] as num?) ?? 0)
+                : ((bData['rentPrice'] as num?) ?? 0).compareTo((aData['rentPrice'] as num?) ?? 0);
           case 4:
-            cmp = (aData['days'] as num).compareTo(bData['days'] as num);
-            break;
+            return _sortAscending
+                ? ((aData['days'] as num?) ?? 0).compareTo((bData['days'] as num?) ?? 0)
+                : ((bData['days'] as num?) ?? 0).compareTo((aData['days'] as num?) ?? 0);
           case 5:
-            cmp = (aData['totalPrice'] as num).compareTo(bData['totalPrice'] as num);
-            break;
+            return _sortAscending
+                ? ((aData['totalPrice'] as num?) ?? 0).compareTo((bData['totalPrice'] as num?) ?? 0)
+                : ((bData['totalPrice'] as num?) ?? 0).compareTo((aData['totalPrice'] as num?) ?? 0);
           case 6:
-            cmp = (aData['startDate'] as Timestamp).compareTo(bData['startDate'] as Timestamp);
-            break;
+            return _sortAscending
+                ? ((aData['startDate'] as Timestamp?) ?? Timestamp(0, 0)).compareTo(
+                    (bData['startDate'] as Timestamp?) ?? Timestamp(0, 0))
+                : ((bData['startDate'] as Timestamp?) ?? Timestamp(0, 0)).compareTo(
+                    (aData['startDate'] as Timestamp?) ?? Timestamp(0, 0));
           case 7:
-            cmp = (aData['endDate'] as Timestamp).compareTo(bData['endDate'] as Timestamp);
-            break;
+            return _sortAscending
+                ? ((aData['endDate'] as Timestamp?) ?? Timestamp(0, 0)).compareTo(
+                    (bData['endDate'] as Timestamp?) ?? Timestamp(0, 0))
+                : ((bData['endDate'] as Timestamp?) ?? Timestamp(0, 0)).compareTo(
+                    (aData['endDate'] as Timestamp?) ?? Timestamp(0, 0));
           default:
-            cmp = 0;
+            return 0;
         }
-        return _sortAscending ? cmp : -cmp;
       });
     }
 
-    setState(() {
-      _filteredDocs = temp;
-    });
+    setState(() => _filteredDocs = docs);
   }
 
   void _onSort(int columnIndex, bool ascending) {
@@ -164,175 +158,175 @@ class _RentalReportWidgetState extends State<RentalReportWidget> {
     _applyFilterAndSort();
   }
 
+  Widget _header(String text) {
+    return Text(
+      text,
+      style: const TextStyle(
+        fontWeight: FontWeight.w600,
+        color: Colors.deepPurple,
+        fontSize: 14,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: Colors.deepPurple.shade700,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: const Text('Rental Report'),
+        centerTitle: true,
       ),
       body: Container(
-        color: Colors.white,
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+        color: Colors.blueGrey[50],
         child: Column(
           children: [
-            // Search Container
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              margin: const EdgeInsets.only(bottom: 12),
-              decoration: BoxDecoration(
-                color: Colors.deepPurple.shade50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.deepPurple, width: 1.5),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.deepPurple.withOpacity(0.1),
-                    blurRadius: 5,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: TextField(
-                controller: _searchController,
-                onChanged: (val) {
-                  setState(() {
-                    _searchQuery = val.trim();
-                  });
-                  _applyFilterAndSort();
-                },
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.search, color: Colors.deepPurple),
-                  hintText: 'Search by Car or Customer Name',
-                  border: InputBorder.none,
-                  hintStyle: TextStyle(color: Colors.deepPurple.shade200),
-                ),
-                style: TextStyle(color: Colors.deepPurple.shade900),
-              ),
-            ),
-
-            // Date Pickers Container
-            Container(
-              padding: const EdgeInsets.all(12),
-              margin: const EdgeInsets.only(bottom: 16),
-              decoration: BoxDecoration(
-                color: Colors.deepPurple.shade50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.deepPurple, width: 1.5),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.deepPurple.withOpacity(0.1),
-                    blurRadius: 5,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: _pickStartDate,
-                      icon: const Icon(Icons.calendar_today, color: Colors.deepPurple),
-                      label: Text(
-                        _startDate == null ? 'Start Date' : _dateFormat.format(_startDate!),
-                        style: TextStyle(color: Colors.deepPurple.shade900),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: Colors.deepPurple, width: 1.5),
-                        foregroundColor: Colors.deepPurple,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: _pickEndDate,
-                      icon: const Icon(Icons.calendar_today, color: Colors.deepPurple),
-                      label: Text(
-                        _endDate == null ? 'End Date' : _dateFormat.format(_endDate!),
-                        style: TextStyle(color: Colors.deepPurple.shade900),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: Colors.deepPurple, width: 1.5),
-                        foregroundColor: Colors.deepPurple,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // DataTable Expanded
-            Expanded(
-              child: StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance.collection('rental').snapshots(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator(color: Colors.deepPurple));
-                  }
-
-                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                    return const Center(
-                        child: Text('No rental records found.',
-                            style: TextStyle(color: Colors.deepPurple, fontWeight: FontWeight.bold)));
-                  }
-
-                  _allDocs = snapshot.data!.docs;
-
-                  // If filtered docs empty but filters/search applied, apply filter
-                  if ((_filteredDocs.isEmpty && (_startDate != null || _endDate != null || _searchQuery.isNotEmpty))) {
-                    WidgetsBinding.instance.addPostFrameCallback((_) => _applyFilterAndSort());
-                  } else if (_filteredDocs.isEmpty) {
-                    _filteredDocs = _allDocs;
-                  }
-
-                  return SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: DataTable(
-                      sortColumnIndex: _sortColumnIndex,
-                      sortAscending: _sortAscending,
-                      headingRowColor: MaterialStateProperty.all(Colors.deepPurple),
-                      dataRowColor: MaterialStateProperty.resolveWith<Color?>(
-                        (Set<MaterialState> states) {
-                          if (states.contains(MaterialState.selected)) {
-                            return Colors.deepPurple[300];
-                          }
-                          // Alternate row color by index
-                          final index = _filteredDocs.indexWhere((d) => d.id == states.toString());
-                          if (index.isEven) {
-                            return Colors.deepPurple[50];
-                          } else {
-                            return Colors.deepPurple[100];
-                          }
-                        },
-                      ),
-                      headingTextStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                      dataTextStyle: const TextStyle(color: Colors.deepPurple),
-                      columns: [
-                        DataColumn(label: const Text('Car'), onSort: (i, asc) => _onSort(i, asc)),
-                        DataColumn(label: const Text('Customer'), onSort: (i, asc) => _onSort(i, asc)),
-                        DataColumn(label: const Text('Contact'), onSort: (i, asc) => _onSort(i, asc)),
-                        DataColumn(label: const Text('Rent/Day'), numeric: true, onSort: (i, asc) => _onSort(i, asc)),
-                        DataColumn(label: const Text('Days'), numeric: true, onSort: (i, asc) => _onSort(i, asc)),
-                        DataColumn(label: const Text('Total Price'), numeric: true, onSort: (i, asc) => _onSort(i, asc)),
-                        DataColumn(label: const Text('Start Date'), onSort: (i, asc) => _onSort(i, asc)),
-                        DataColumn(label: const Text('End Date'), onSort: (i, asc) => _onSort(i, asc)),
+            Card(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              elevation: 5,
+              color: Colors.deepPurple.shade50,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.deepPurple,
+                              side: BorderSide(color: Colors.deepPurple.shade300),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            ),
+                            icon: const Icon(Icons.date_range),
+                            label: Text(
+                              _startDate != null ? _dateFormat.format(_startDate!) : 'Start Date',
+                              style: TextStyle(
+                                color: _startDate != null ? Colors.deepPurple.shade900 : Colors.deepPurple.shade400,
+                              ),
+                            ),
+                            onPressed: () => _pickDate(context, true),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.deepPurple,
+                              side: BorderSide(color: Colors.deepPurple.shade300),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            ),
+                            icon: const Icon(Icons.date_range),
+                            label: Text(
+                              _endDate != null ? _dateFormat.format(_endDate!) : 'End Date',
+                              style: TextStyle(
+                                color: _endDate != null ? Colors.deepPurple.shade900 : Colors.deepPurple.shade400,
+                              ),
+                            ),
+                            onPressed: () => _pickDate(context, false),
+                          ),
+                        ),
                       ],
-                      rows: _filteredDocs.map((doc) {
-                        final data = doc.data()! as Map<String, dynamic>;
-                        return DataRow(cells: [
-                          DataCell(Text(data['carName'] ?? '-')),
-                          DataCell(Text(data['name'] ?? '-')),
-                          DataCell(Text(data['contact'] ?? '-')),
-                          DataCell(Text(data['rentPrice']?.toString() ?? '-')),
-                          DataCell(Text(data['days']?.toString() ?? '-')),
-                          DataCell(Text(data['totalPrice']?.toString() ?? '-')),
-                          DataCell(Text(formatTimestamp(data['startDate']))),
-                          DataCell(Text(formatTimestamp(data['endDate']))),
-                        ]);
-                      }).toList(),
                     ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        prefixIcon: Icon(Icons.search, color: Colors.deepPurple.shade400),
+                        hintText: 'Search by car or customer name...',
+                        hintStyle: TextStyle(color: Colors.deepPurple.shade200),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(color: Colors.deepPurple.shade200),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(color: Colors.deepPurple.shade400),
+                        ),
+                        filled: true,
+                        fillColor: Colors.white,
+                      ),
+                      style: TextStyle(color: Colors.deepPurple.shade900),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Expanded(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return StreamBuilder<QuerySnapshot>(
+                    stream: FirebaseFirestore.instance.collection('rental').snapshots(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator(color: Colors.deepPurple));
+                      }
+                      if (snapshot.hasError) {
+                        return Center(
+                            child: Text('Error: ${snapshot.error}', style: const TextStyle(color: Colors.black)));
+                      }
+
+                      _allDocs = snapshot.data?.docs ?? [];
+                      if (_filteredDocs.isEmpty) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) => _applyFilterAndSort());
+                      }
+
+                      return Card(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        elevation: 5,
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(minWidth: constraints.maxWidth),
+                            child: SingleChildScrollView(
+                              child: DataTable(
+                                headingRowColor: MaterialStateProperty.all(Colors.deepPurple.shade100),
+                                dataRowColor: MaterialStateProperty.all(Colors.white),
+                                columnSpacing: 28,
+                                headingTextStyle: TextStyle(
+                                  color: Colors.deepPurple.shade800,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                                sortColumnIndex: _sortColumnIndex,
+                                sortAscending: _sortAscending,
+                                columns: [
+                                  DataColumn(label: _header('Car'), onSort: (i, asc) => _onSort(i, asc)),
+                                  DataColumn(label: _header('Customer'), onSort: (i, asc) => _onSort(i, asc)),
+                                  DataColumn(label: _header('Contact'), onSort: (i, asc) => _onSort(i, asc)),
+                                  DataColumn(label: _header('Rent/Day'), numeric: true, onSort: (i, asc) => _onSort(i, asc)),
+                                  DataColumn(label: _header('Days'), numeric: true, onSort: (i, asc) => _onSort(i, asc)),
+                                  DataColumn(label: _header('Total'), numeric: true, onSort: (i, asc) => _onSort(i, asc)),
+                                  DataColumn(label: _header('Start Date'), onSort: (i, asc) => _onSort(i, asc)),
+                                  DataColumn(label: _header('End Date'), onSort: (i, asc) => _onSort(i, asc)),
+                                ],
+                                rows: _filteredDocs.map((doc) {
+                                  final data = doc.data() as Map<String, dynamic>;
+                                  return DataRow(
+                                    cells: [
+                                      DataCell(Text(data['carName'] ?? '-', style: TextStyle(color: Colors.deepPurple.shade900))),
+                                      DataCell(Text(data['name'] ?? '-', style: TextStyle(color: Colors.deepPurple.shade900))),
+                                      DataCell(Text(data['contact'] ?? '-', style: TextStyle(color: Colors.deepPurple.shade900))),
+                                      DataCell(Text(_formatCurrency(data['rentPrice'] as num?), style: TextStyle(color: Colors.deepPurple.shade900))),
+                                      DataCell(Text('${data['days'] ?? 0}', style: TextStyle(color: Colors.deepPurple.shade900))),
+                                      DataCell(Text(_formatCurrency(data['totalPrice'] as num?), style: TextStyle(color: Colors.deepPurple.shade900))),
+                                      DataCell(Text(_formatTimestamp(data['startDate'] as Timestamp?), style: TextStyle(color: Colors.deepPurple.shade900))),
+                                      DataCell(Text(_formatTimestamp(data['endDate'] as Timestamp?), style: TextStyle(color: Colors.deepPurple.shade900))),
+                                    ],
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   );
                 },
               ),
