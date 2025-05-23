@@ -22,6 +22,9 @@ class _BuyReportWidgetState extends State<BuyReportWidget> {
 
   final TextEditingController _searchController = TextEditingController();
 
+  // Flag to prevent repeated filtering during build
+  bool _needsFilterUpdate = false;
+
   @override
   void initState() {
     super.initState();
@@ -36,8 +39,10 @@ class _BuyReportWidgetState extends State<BuyReportWidget> {
   }
 
   void _onSearchChanged() {
-    setState(() => _searchQuery = _searchController.text);
-    _applyFilterAndSort();
+    setState(() {
+      _searchQuery = _searchController.text.trim();
+      _needsFilterUpdate = true;
+    });
   }
 
   Future<void> _pickDate(BuildContext context, bool isStartDate) async {
@@ -67,8 +72,8 @@ class _BuyReportWidgetState extends State<BuyReportWidget> {
         } else {
           _endDate = picked;
         }
+        _needsFilterUpdate = true;
       });
-      _applyFilterAndSort();
     }
   }
 
@@ -81,71 +86,98 @@ class _BuyReportWidgetState extends State<BuyReportWidget> {
   }
 
   void _applyFilterAndSort() {
+    if (_allDocs.isEmpty) {
+      setState(() {
+        _filteredDocs = [];
+        _needsFilterUpdate = false;
+      });
+      return;
+    }
+
     List<QueryDocumentSnapshot> docs = _allDocs.where((doc) {
       final data = doc.data() as Map<String, dynamic>;
       final date = (data['createdAt'] as Timestamp?)?.toDate();
 
+      // Date filtering
       if (_startDate != null && date != null && date.isBefore(_startDate!)) return false;
       if (_endDate != null && date != null && date.isAfter(_endDate!)) return false;
 
       if (_searchQuery.isNotEmpty) {
-        final name = data['name']?.toString().toLowerCase() ?? '';
-        if (!name.contains(_searchQuery.toLowerCase())) return false;
+        final q = _searchQuery.toLowerCase();
+
+        // Search in multiple fields: carName, name, contact, price, quantity, totalPrice, date string
+        final carName = (data['carName'] ?? '').toString().toLowerCase();
+        final customerName = (data['name'] ?? '').toString().toLowerCase();
+        final contact = (data['contact'] ?? '').toString().toLowerCase();
+        final price = (data['buyPrice']?.toString() ?? '').toLowerCase();
+        final quantity = (data['quantity']?.toString() ?? '').toLowerCase();
+        final totalPrice = (data['totalPrice']?.toString() ?? '').toLowerCase();
+        final createdAtStr = date != null ? _dateFormat.format(date).toLowerCase() : '';
+
+        if (!(carName.contains(q) ||
+            customerName.contains(q) ||
+            contact.contains(q) ||
+            price.contains(q) ||
+            quantity.contains(q) ||
+            totalPrice.contains(q) ||
+            createdAtStr.contains(q))) {
+          return false;
+        }
       }
+
       return true;
     }).toList();
 
+    // Sorting
     if (_sortColumnIndex != null) {
       docs.sort((a, b) {
         final aData = a.data() as Map<String, dynamic>;
         final bData = b.data() as Map<String, dynamic>;
 
+        int cmp;
+
         switch (_sortColumnIndex) {
           case 0:
-            return _sortAscending
-                ? (aData['carName'] ?? '').compareTo(bData['carName'] ?? '')
-                : (bData['carName'] ?? '').compareTo(aData['carName'] ?? '');
+            cmp = (aData['carName'] ?? '').toString().compareTo((bData['carName'] ?? '').toString());
+            break;
           case 1:
-            return _sortAscending
-                ? (aData['name'] ?? '').compareTo(bData['name'] ?? '')
-                : (bData['name'] ?? '').compareTo(aData['name'] ?? '');
+            cmp = (aData['name'] ?? '').toString().compareTo((bData['name'] ?? '').toString());
+            break;
           case 2:
-            return _sortAscending
-                ? (aData['contact'] ?? '').compareTo(bData['contact'] ?? '')
-                : (bData['contact'] ?? '').compareTo(aData['contact'] ?? '');
+            cmp = (aData['contact'] ?? '').toString().compareTo((bData['contact'] ?? '').toString());
+            break;
           case 3:
-            return _sortAscending
-                ? ((aData['buyPrice'] as num?) ?? 0).compareTo((bData['buyPrice'] as num?) ?? 0)
-                : ((bData['buyPrice'] as num?) ?? 0).compareTo((aData['buyPrice'] as num?) ?? 0);
+            cmp = ((aData['buyPrice'] as num?) ?? 0).compareTo((bData['buyPrice'] as num?) ?? 0);
+            break;
           case 4:
-            return _sortAscending
-                ? ((aData['quantity'] as num?) ?? 0).compareTo((bData['quantity'] as num?) ?? 0)
-                : ((bData['quantity'] as num?) ?? 0).compareTo((aData['quantity'] as num?) ?? 0);
+            cmp = ((aData['quantity'] as num?) ?? 0).compareTo((bData['quantity'] as num?) ?? 0);
+            break;
           case 5:
-            return _sortAscending
-                ? ((aData['totalPrice'] as num?) ?? 0).compareTo((bData['totalPrice'] as num?) ?? 0)
-                : ((bData['totalPrice'] as num?) ?? 0).compareTo((aData['totalPrice'] as num?) ?? 0);
+            cmp = ((aData['totalPrice'] as num?) ?? 0).compareTo((bData['totalPrice'] as num?) ?? 0);
+            break;
           case 6:
-            return _sortAscending
-                ? ((aData['createdAt'] as Timestamp?) ?? Timestamp(0, 0)).compareTo(
-                    (bData['createdAt'] as Timestamp?) ?? Timestamp(0, 0))
-                : ((bData['createdAt'] as Timestamp?) ?? Timestamp(0, 0)).compareTo(
-                    (aData['createdAt'] as Timestamp?) ?? Timestamp(0, 0));
+            cmp = ((aData['createdAt'] as Timestamp?) ?? Timestamp(0, 0))
+                .compareTo((bData['createdAt'] as Timestamp?) ?? Timestamp(0, 0));
+            break;
           default:
-            return 0;
+            cmp = 0;
         }
+        return _sortAscending ? cmp : -cmp;
       });
     }
 
-    setState(() => _filteredDocs = docs);
+    setState(() {
+      _filteredDocs = docs;
+      _needsFilterUpdate = false;
+    });
   }
 
   void _onSort(int columnIndex, bool ascending) {
     setState(() {
       _sortColumnIndex = columnIndex;
       _sortAscending = ascending;
+      _needsFilterUpdate = true;
     });
-    _applyFilterAndSort();
   }
 
   Widget _header(String text) {
@@ -228,7 +260,7 @@ class _BuyReportWidgetState extends State<BuyReportWidget> {
                       controller: _searchController,
                       decoration: InputDecoration(
                         prefixIcon: Icon(Icons.search, color: Colors.deepPurple.shade400),
-                        hintText: 'Search by customer name...',
+                        hintText: 'Search by any field (car, customer, contact, price...)',
                         hintStyle: TextStyle(color: Colors.deepPurple.shade200),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -262,56 +294,82 @@ class _BuyReportWidgetState extends State<BuyReportWidget> {
                             child: Text('Error: ${snapshot.error}', style: const TextStyle(color: Colors.black)));
                       }
 
-                      _allDocs = snapshot.data?.docs ?? [];
-                      if (_filteredDocs.isEmpty) {
+                      // Update allDocs and mark filter needed
+                      if (snapshot.hasData) {
+                        final newDocs = snapshot.data!.docs;
+                        // Only update if data changed to avoid infinite loops
+                        if (newDocs.length != _allDocs.length ||
+                            !_allDocs.every((doc) => newDocs.contains(doc))) {
+                          _allDocs = newDocs;
+                          _needsFilterUpdate = true;
+                        }
+                      }
+
+                      // Apply filter and sort if needed (do it outside build with post frame)
+                      if (_needsFilterUpdate) {
                         WidgetsBinding.instance.addPostFrameCallback((_) => _applyFilterAndSort());
                       }
 
-                      return Card(
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        elevation: 5,
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: ConstrainedBox(
-                            constraints: BoxConstraints(minWidth: constraints.maxWidth),
-                            child: SingleChildScrollView(
-                              child: DataTable(
-                                headingRowColor: MaterialStateProperty.all(Colors.deepPurple.shade100),
-                                dataRowColor: MaterialStateProperty.all(Colors.white),
-                                columnSpacing: 28,
-                                headingTextStyle: TextStyle(
-                                  color: Colors.deepPurple.shade800,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14,
-                                ),
-                                sortColumnIndex: _sortColumnIndex,
-                                sortAscending: _sortAscending,
-                                columns: [
-                                  DataColumn(label: _header('Car'), onSort: (i, asc) => _onSort(i, asc)),
-                                  DataColumn(label: _header('Customer'), onSort: (i, asc) => _onSort(i, asc)),
-                                  DataColumn(label: _header('Contact'), onSort: (i, asc) => _onSort(i, asc)),
-                                  DataColumn(label: _header('Price'), numeric: true, onSort: (i, asc) => _onSort(i, asc)),
-                                  DataColumn(label: _header('Qty'), numeric: true, onSort: (i, asc) => _onSort(i, asc)),
-                                  DataColumn(label: _header('Total'), numeric: true, onSort: (i, asc) => _onSort(i, asc)),
-                                  DataColumn(label: _header('Date'), onSort: (i, asc) => _onSort(i, asc)),
-                                ],
-                                rows: _filteredDocs.map((doc) {
-                                  final data = doc.data() as Map<String, dynamic>;
-                                  return DataRow(
-                                    cells: [
-                                      DataCell(Text(data['carName'] ?? '-', style: TextStyle(color: Colors.deepPurple.shade900))),
-                                      DataCell(Text(data['name'] ?? '-', style: TextStyle(color: Colors.deepPurple.shade900))),
-                                      DataCell(Text(data['contact'] ?? '-', style: TextStyle(color: Colors.deepPurple.shade900))),
-                                      DataCell(Text(_formatCurrency(data['buyPrice'] as num?), style: TextStyle(color: Colors.deepPurple.shade900))),
-                                      DataCell(Text('${data['quantity'] ?? 0}', style: TextStyle(color: Colors.deepPurple.shade900))),
-                                      DataCell(Text(_formatCurrency(data['totalPrice'] as num?), style: TextStyle(color: Colors.deepPurple.shade900))),
-                                      DataCell(Text(_formatTimestamp(data['createdAt'] as Timestamp?), style: TextStyle(color: Colors.deepPurple.shade900))),
-                                    ],
-                                  );
-                                }).toList(),
-                              ),
-                            ),
+                      if (_filteredDocs.isEmpty) {
+                        return const Center(
+                          child: Text(
+                            'No records found',
+                            style: TextStyle(color: Colors.deepPurple),
                           ),
+                        );
+                      }
+
+                      return SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: DataTable(
+                          sortAscending: _sortAscending,
+                          sortColumnIndex: _sortColumnIndex,
+                          headingRowColor: MaterialStateProperty.all(Colors.deepPurple.shade100),
+                          columns: [
+                            DataColumn(
+                              label: _header('Car Name'),
+                              onSort: (columnIndex, ascending) => _onSort(columnIndex, ascending),
+                            ),
+                            DataColumn(
+                              label: _header('Customer Name'),
+                              onSort: (columnIndex, ascending) => _onSort(columnIndex, ascending),
+                            ),
+                            DataColumn(
+                              label: _header('Contact'),
+                              onSort: (columnIndex, ascending) => _onSort(columnIndex, ascending),
+                            ),
+                            DataColumn(
+                              label: _header('Price'),
+                              numeric: true,
+                              onSort: (columnIndex, ascending) => _onSort(columnIndex, ascending),
+                            ),
+                            DataColumn(
+                              label: _header('Quantity'),
+                              numeric: true,
+                              onSort: (columnIndex, ascending) => _onSort(columnIndex, ascending),
+                            ),
+                            DataColumn(
+                              label: _header('Total Price'),
+                              numeric: true,
+                              onSort: (columnIndex, ascending) => _onSort(columnIndex, ascending),
+                            ),
+                            DataColumn(
+                              label: _header('Date'),
+                              onSort: (columnIndex, ascending) => _onSort(columnIndex, ascending),
+                            ),
+                          ],
+                          rows: _filteredDocs.map((doc) {
+                            final data = doc.data() as Map<String, dynamic>;
+                            return DataRow(cells: [
+                              DataCell(Text(data['carName'] ?? '-')),
+                              DataCell(Text(data['name'] ?? '-')),
+                              DataCell(Text(data['contact'] ?? '-')),
+                              DataCell(Text(_formatCurrency(data['buyPrice']))),
+                              DataCell(Text(data['quantity']?.toString() ?? '-')),
+                              DataCell(Text(_formatCurrency(data['totalPrice']))),
+                              DataCell(Text(_formatTimestamp(data['createdAt']))),
+                            ]);
+                          }).toList(),
                         ),
                       );
                     },
