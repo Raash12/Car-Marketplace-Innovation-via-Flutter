@@ -5,25 +5,23 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
-class BuyReportWidget extends StatefulWidget {
-  const BuyReportWidget({super.key});
+class BuyReportPage extends StatefulWidget {
+  const BuyReportPage({super.key});
 
   @override
-  State<BuyReportWidget> createState() => _BuyReportWidgetState();
+  State<BuyReportPage> createState() => _BuyReportPageState();
 }
 
-class _BuyReportWidgetState extends State<BuyReportWidget> {
-  final DateFormat _dateFormat = DateFormat('yyyy-MM-dd');
-  final DateFormat _pdfDateFormat = DateFormat('d/M/yyyy');
+class _BuyReportPageState extends State<BuyReportPage> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
   DateTime? _startDate;
   DateTime? _endDate;
-  String _searchQuery = '';
   int? _sortColumnIndex;
   bool _sortAscending = true;
 
   List<QueryDocumentSnapshot> _allDocs = [];
   List<QueryDocumentSnapshot> _filteredDocs = [];
-  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -54,10 +52,10 @@ class _BuyReportWidgetState extends State<BuyReportWidget> {
           colorScheme: ColorScheme.light(
             primary: Colors.deepPurple,
             onPrimary: Colors.white,
-            onSurface: Colors.deepPurple.shade700,
+            onSurface: Colors.deepPurple,
           ),
           textButtonTheme: TextButtonThemeData(
-            style: TextButton.styleFrom(foregroundColor: Colors.deepPurple.shade700),
+            style: TextButton.styleFrom(foregroundColor: Colors.deepPurple),
           ),
         ),
         child: child!,
@@ -68,12 +66,6 @@ class _BuyReportWidgetState extends State<BuyReportWidget> {
         if (isStartDate) {
           _startDate = picked;
         } else {
-          if (_startDate != null && picked.isBefore(_startDate!)) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('End date cannot be before start date.')),
-            );
-            return;
-          }
           _endDate = picked;
         }
       });
@@ -81,25 +73,38 @@ class _BuyReportWidgetState extends State<BuyReportWidget> {
     }
   }
 
-  String _formatCurrency(num? value) => value?.toStringAsFixed(2) ?? '0.00';
-  String _formatTimestamp(Timestamp? ts) => ts != null ? _dateFormat.format(ts.toDate()) : '-';
-  String _formatPdfTimestamp(Timestamp? ts) => ts != null ? _pdfDateFormat.format(ts.toDate()) : '-';
+  String _formatCurrency(num? value) {
+    return '\$${value?.toStringAsFixed(2) ?? '0.00'}';
+  }
+
+  String _formatTimestamp(Timestamp? ts) {
+    return ts != null ? DateFormat('yyyy-MM-dd – kk:mm').format(ts.toDate()) : '-';
+  }
+
+  bool _matchesDateRange(Timestamp timestamp) {
+    final date = timestamp.toDate();
+    if (_startDate != null && date.isBefore(_startDate!)) return false;
+    if (_endDate != null && date.isAfter(_endDate!)) return false;
+    return true;
+  }
 
   void _applyFilterAndSort() {
     List<QueryDocumentSnapshot> docs = _allDocs.where((doc) {
       final data = doc.data() as Map<String, dynamic>;
-      final date = (data['createdAt'] as Timestamp?)?.toDate();
+      final createdAt = data['createdAt'] as Timestamp?;
+      final query = _searchQuery.toLowerCase();
 
-      if (_startDate != null && date != null && date.isBefore(_startDate!)) return false;
-      if (_endDate != null && date != null && date.isAfter(_endDate!.add(const Duration(days: 1)))) return false;
+      if (createdAt != null && !_matchesDateRange(createdAt)) return false;
 
       if (_searchQuery.isNotEmpty) {
-        final query = _searchQuery.toLowerCase();
-        final customerName = data['name']?.toString().toLowerCase() ?? '';
         final carName = data['carName']?.toString().toLowerCase() ?? '';
+        final buyerName = data['name']?.toString().toLowerCase() ?? '';
         final contact = data['contact']?.toString().toLowerCase() ?? '';
-
-        if (!(customerName.contains(query) || carName.contains(query) || contact.contains(query))) {
+        final address = data['address']?.toString().toLowerCase() ?? '';
+        if (!carName.contains(query) &&
+            !buyerName.contains(query) &&
+            !contact.contains(query) &&
+            !address.contains(query)) {
           return false;
         }
       }
@@ -111,39 +116,48 @@ class _BuyReportWidgetState extends State<BuyReportWidget> {
         final aData = a.data() as Map<String, dynamic>;
         final bData = b.data() as Map<String, dynamic>;
 
-        dynamic getValue(Map<String, dynamic> data, int index) {
-          switch (index) {
-            case 0: return data['carName'] ?? '';
-            case 1: return data['name'] ?? '';
-            case 2: return data['contact'] ?? '';
-            case 3: return (data['buyPrice'] as num?) ?? 0;
-            case 4: return (data['quantity'] as num?) ?? 0;
-            case 5: return (data['totalPrice'] as num?) ?? 0;
-            case 6: return (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime(1970);
-            default: return '';
-          }
+        switch (_sortColumnIndex) {
+          case 0:
+            return _sortAscending
+                ? (aData['carName'] ?? '').compareTo(bData['carName'] ?? '')
+                : (bData['carName'] ?? '').compareTo(aData['carName'] ?? '');
+          case 1:
+            return _sortAscending
+                ? ((aData['buyPrice'] as num?) ?? 0).compareTo((bData['buyPrice'] as num?) ?? 0)
+                : ((bData['buyPrice'] as num?) ?? 0).compareTo((aData['buyPrice'] as num?) ?? 0);
+          case 2:
+            return _sortAscending
+                ? (aData['name'] ?? '').compareTo(bData['name'] ?? '')
+                : (bData['name'] ?? '').compareTo(aData['name'] ?? '');
+          case 3:
+            return _sortAscending
+                ? (aData['contact'] ?? '').compareTo(bData['contact'] ?? '')
+                : (bData['contact'] ?? '').compareTo(aData['contact'] ?? '');
+          case 4:
+            return _sortAscending
+                ? (aData['email'] ?? '').compareTo(bData['email'] ?? '')
+                : (bData['email'] ?? '').compareTo(aData['email'] ?? '');
+          case 5:
+            return _sortAscending
+                ? (aData['address'] ?? '').compareTo(bData['address'] ?? '')
+                : (bData['address'] ?? '').compareTo(aData['address'] ?? '');
+          case 6:
+            return _sortAscending
+                ? (aData['notes'] ?? '').compareTo(bData['notes'] ?? '')
+                : (bData['notes'] ?? '').compareTo(aData['notes'] ?? '');
+          case 7:
+            return _sortAscending
+                ? ((aData['createdAt'] as Timestamp?) ?? Timestamp(0, 0)).compareTo(
+                    (bData['createdAt'] as Timestamp?) ?? Timestamp(0, 0))
+                : ((bData['createdAt'] as Timestamp?) ?? Timestamp(0, 0)).compareTo(
+                    (aData['createdAt'] as Timestamp?) ?? Timestamp(0, 0));
+          default:
+            return 0;
         }
-
-        final aValue = getValue(aData, _sortColumnIndex!);
-        final bValue = getValue(bData, _sortColumnIndex!);
-
-        int comparisonResult;
-        if (aValue is String && bValue is String) {
-          comparisonResult = aValue.toLowerCase().compareTo(bValue.toLowerCase());
-        } else if (aValue is num && bValue is num) {
-          comparisonResult = aValue.compareTo(bValue);
-        } else if (aValue is DateTime && bValue is DateTime) {
-          comparisonResult = aValue.compareTo(bValue);
-        } else {
-          comparisonResult = aValue.toString().compareTo(bValue.toString());
-        }
-
-        return _sortAscending ? comparisonResult : -comparisonResult;
       });
     }
-    if (mounted) {
-      setState(() => _filteredDocs = docs);
-    }
+
+    setState(() => _filteredDocs = docs);
   }
 
   void _onSort(int columnIndex, bool ascending) {
@@ -154,121 +168,57 @@ class _BuyReportWidgetState extends State<BuyReportWidget> {
     _applyFilterAndSort();
   }
 
-  Widget _header(String text) {
-    return Text(
-      text,
-      style: TextStyle(
-        fontWeight: FontWeight.w600,
-        color: Colors.deepPurple.shade800,
-        fontSize: 14,
-      ),
-    );
-  }
-
   Future<void> _generatePdf() async {
     final pdf = pw.Document();
-    final currentDate = _pdfDateFormat.format(DateTime.now());
-    final totalAmount = _filteredDocs.fold<double>(0.0, (sum, doc) {
-      final data = doc.data() as Map<String, dynamic>;
-      return sum + ((data['totalPrice'] as num?)?.toDouble() ?? 0.0);
-    });
+    final currentDate = DateFormat('M/d/yyyy').format(DateTime.now());
 
     pdf.addPage(
-      pw.Page(
-        pageFormat: PdfPageFormat.a4,
-        build: (pw.Context context) {
-          return pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Row(
-                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                children: [
-                  pw.Text(
-                    'Buy Report',
-                    style: pw.TextStyle(
-                      fontSize: 24,
-                      fontWeight: pw.FontWeight.bold,
-                      color: PdfColors.purple700,
-                    ),
-                  ),
-                  pw.Text(
-                    'Date: $currentDate',
-                    style: const pw.TextStyle(fontSize: 12, color: PdfColors.grey600),
-                  ),
-                ],
-              ),
-              pw.SizedBox(height: 10),
-              pw.Row(
-                children: [
-                  pw.Text('Date Range: ', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-                  pw.Text(_startDate != null ? _pdfDateFormat.format(_startDate!) : 'Start'),
-                  pw.Text(' - '),
-                  pw.Text(_endDate != null ? _pdfDateFormat.format(_endDate!) : 'End'),
-                ],
-              ),
-              pw.SizedBox(height: 20),
-              pw.Table.fromTextArray(
-                context: context,
-                border: pw.TableBorder.all(color: PdfColors.purple700, width: 0.5),
-                headerStyle: pw.TextStyle(
-                  fontWeight: pw.FontWeight.bold,
-                  color: PdfColors.white,
-                  fontSize: 10,
-                ),
-                headerDecoration: const pw.BoxDecoration(color: PdfColors.purple700),
-                cellStyle: const pw.TextStyle(fontSize: 9),
-                cellAlignment: pw.Alignment.centerLeft,
-                cellAlignments: {
-                  3: pw.Alignment.centerRight,
-                  4: pw.Alignment.centerRight,
-                  5: pw.Alignment.centerRight,
-                },
-                headers: ['Car', 'Customer', 'Contact', 'Price', 'Qty', 'Total', 'Date'],
-                data: _filteredDocs.map((doc) {
-                  final data = doc.data() as Map<String, dynamic>;
-                  return [
-                    data['carName'] ?? '-',
-                    data['name'] ?? '-',
-                    data['contact'] ?? '-',
-                    _formatCurrency(data['buyPrice'] as num?),
-                    '${data['quantity'] ?? 0}',
-                    _formatCurrency(data['totalPrice'] as num?),
-                    _formatPdfTimestamp(data['createdAt'] as Timestamp?),
-                  ];
-                }).toList(),
-              ),
-              pw.SizedBox(height: 20),
-              pw.Row(
-                mainAxisAlignment: pw.MainAxisAlignment.end,
-                children: [
-                  pw.Text(
-                    'Total Amount: ${_formatCurrency(totalAmount)}',
-                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 12, color: PdfColors.purple700),
-                  ),
-                ],
-              ),
-              pw.SizedBox(height: 5),
-              pw.Align(
-                alignment: pw.Alignment.centerRight,
-                child: pw.Text(
-                  'Total Records: ${_filteredDocs.length}',
-                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.grey700),
-                ),
-              ),
-              pw.SizedBox(height: 20),
-              pw.Align(
-                alignment: pw.Alignment.bottomCenter,
-                child: pw.Text(
-                  'Generated on: $currentDate',
-                  style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey500),
-                ),
-              ),
-            ],
-          );
-        },
+      pw.MultiPage(
+        build: (context) => [
+          pw.Text('Buy Report', style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
+          pw.Text('Report Date: $currentDate', style: const pw.TextStyle(fontSize: 12)),
+          pw.SizedBox(height: 16),
+          if (_startDate != null && _endDate != null)
+            pw.Text(
+              'Date Range: ${DateFormat('d/M/yyyy').format(_startDate!)} to ${DateFormat('d/M/yyyy').format(_endDate!)}',
+              style: const pw.TextStyle(fontSize: 12),
+            ),
+          pw.SizedBox(height: 16),
+          pw.Table.fromTextArray(
+            headers: ['Car', 'Price', 'Buyer', 'Contact', 'Email', 'Address', 'Notes', 'Date'],
+            headerStyle: pw.TextStyle(
+              fontWeight: pw.FontWeight.bold,
+              color: PdfColors.white,
+            ),
+            headerDecoration: pw.BoxDecoration(color: PdfColors.purple),
+            border: pw.TableBorder.all(color: PdfColors.purple),
+            data: _filteredDocs.map((doc) {
+              final data = doc.data() as Map<String, dynamic>;
+              return [
+                data['carName'] ?? '-',
+                _formatCurrency(data['buyPrice'] as num?),
+                data['name'] ?? '-',
+                data['contact'] ?? '-',
+                data['email'] ?? '-',
+                data['address'] ?? '-',
+                data['notes'] ?? '-',
+                _formatTimestamp(data['createdAt'] as Timestamp?),
+              ];
+            }).toList(),
+          ),
+          pw.SizedBox(height: 16),
+          pw.Align(
+            alignment: pw.Alignment.centerRight,
+            child: pw.Text(
+              'Total Records: ${_filteredDocs.length}',
+              style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+            ),
+          ),
+        ],
       ),
     );
-    await Printing.layoutPdf(onLayout: (PdfPageFormat format) async => pdf.save());
+
+    await Printing.layoutPdf(onLayout: (_) => pdf.save());
   }
 
   @override
@@ -283,10 +233,11 @@ class _BuyReportWidgetState extends State<BuyReportWidget> {
         title: const Text('Buy Report', style: TextStyle(color: Colors.white)),
         centerTitle: true,
         actions: [
+        
           IconButton(
-            icon: const Icon(Icons.print, color: Colors.white),
+            icon: const Icon(Icons.picture_as_pdf, color: Colors.white),
+            tooltip: 'Export as PDF',
             onPressed: _generatePdf,
-            tooltip: 'Generate PDF',
           ),
         ],
       ),
@@ -306,38 +257,36 @@ class _BuyReportWidgetState extends State<BuyReportWidget> {
                     Row(
                       children: [
                         Expanded(
-                          child: OutlinedButton.icon(
+                          child: OutlinedButton(
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.deepPurple.shade700,
+                              foregroundColor: Colors.deepPurple,
                               side: BorderSide(color: Colors.deepPurple.shade300),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                             ),
-                            icon: const Icon(Icons.date_range),
-                            label: Text(
-                              _startDate != null ? _dateFormat.format(_startDate!) : 'Start Date',
+                            child: Text(
+                              _startDate != null ? DateFormat('yyyy-MM-dd').format(_startDate!) : 'Start Date',
                               style: TextStyle(
                                 color: _startDate != null ? Colors.deepPurple.shade900 : Colors.deepPurple.shade400,
                               ),
                             ),
-                            onPressed: () => _pickDate(context, true),
+                            onPressed: () => _pickDate(context, true), // Start date button
                           ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: OutlinedButton.icon(
+                          child: OutlinedButton(
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.deepPurple.shade700,
+                              foregroundColor: Colors.deepPurple,
                               side: BorderSide(color: Colors.deepPurple.shade300),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                             ),
-                            icon: const Icon(Icons.date_range),
-                            label: Text(
-                              _endDate != null ? _dateFormat.format(_endDate!) : 'End Date',
+                            child: Text(
+                              _endDate != null ? DateFormat('yyyy-MM-dd').format(_endDate!) : 'End Date',
                               style: TextStyle(
                                 color: _endDate != null ? Colors.deepPurple.shade900 : Colors.deepPurple.shade400,
                               ),
                             ),
-                            onPressed: () => _pickDate(context, false),
+                            onPressed: () => _pickDate(context, false), // End date button
                           ),
                         ),
                       ],
@@ -347,7 +296,7 @@ class _BuyReportWidgetState extends State<BuyReportWidget> {
                       controller: _searchController,
                       decoration: InputDecoration(
                         prefixIcon: Icon(Icons.search, color: Colors.deepPurple.shade400),
-                        hintText: 'Search by customer, car, or contact...',
+                        hintText: 'Search by car, buyer, contact, or address...',
                         hintStyle: TextStyle(color: Colors.deepPurple.shade200),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -369,25 +318,19 @@ class _BuyReportWidgetState extends State<BuyReportWidget> {
             const SizedBox(height: 20),
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance.collection('buy').orderBy('createdAt', descending: true).snapshots(),
+                stream: FirebaseFirestore.instance.collection('buy').snapshots(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator(color: Colors.deepPurple));
                   }
                   if (snapshot.hasError) {
-                    return Center(child: Text('Error: ${snapshot.error}', style: const TextStyle(color: Colors.black)));
-                  }
-                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                    return const Center(child: Text('No buy records found.', style: TextStyle(color: Colors.black54)));
+                    return Center(child: Text('Error: ${snapshot.error}'));
                   }
 
                   _allDocs = snapshot.data?.docs ?? [];
-
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (mounted) {
-                      _applyFilterAndSort();
-                    }
-                  });
+                  if (_filteredDocs.isEmpty) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) => _applyFilterAndSort());
+                  }
 
                   return Card(
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -397,33 +340,30 @@ class _BuyReportWidgetState extends State<BuyReportWidget> {
                       child: DataTable(
                         headingRowColor: MaterialStateProperty.all(Colors.deepPurple.shade100),
                         dataRowColor: MaterialStateProperty.all(Colors.white),
-                        columnSpacing: 28,
-                        headingTextStyle: TextStyle(
-                          color: Colors.deepPurple.shade800,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
-                        sortAscending: _sortAscending,
+                        columnSpacing: 16,
                         sortColumnIndex: _sortColumnIndex,
-                        columns: [
-                          DataColumn(label: _header('Car'), onSort: (i, asc) => _onSort(i, asc)),
-                          DataColumn(label: _header('Customer'), onSort: (i, asc) => _onSort(i, asc)),
-                          DataColumn(label: _header('Contact'), onSort: (i, asc) => _onSort(i, asc)),
-                          DataColumn(label: _header('Price'), numeric: true, onSort: (i, asc) => _onSort(i, asc)),
-                          DataColumn(label: _header('Qty'), numeric: true, onSort: (i, asc) => _onSort(i, asc)),
-                          DataColumn(label: _header('Total'), numeric: true, onSort: (i, asc) => _onSort(i, asc)),
-                          DataColumn(label: _header('Date'), onSort: (i, asc) => _onSort(i, asc)),
+                        sortAscending: _sortAscending,
+                        columns: const [
+                          DataColumn(label: Text('Car')),
+                          DataColumn(label: Text('Price'), numeric: true),
+                          DataColumn(label: Text('Buyer')),
+                          DataColumn(label: Text('Contact')),
+                          DataColumn(label: Text('Email')),
+                          DataColumn(label: Text('Address')),
+                          DataColumn(label: Text('Notes')),
+                          DataColumn(label: Text('Date')),
                         ],
                         rows: _filteredDocs.map((doc) {
                           final data = doc.data() as Map<String, dynamic>;
                           return DataRow(cells: [
-                            DataCell(Text(data['carName'] ?? '-', style: TextStyle(color: Colors.deepPurple.shade900))),
-                            DataCell(Text(data['name'] ?? '-', style: TextStyle(color: Colors.deepPurple.shade900))),
-                            DataCell(Text(data['contact'] ?? '-', style: TextStyle(color: Colors.deepPurple.shade900))),
-                            DataCell(Text(_formatCurrency(data['buyPrice'] as num?), style: TextStyle(color: Colors.deepPurple.shade900))),
-                            DataCell(Text('${data['quantity'] ?? 0}', style: TextStyle(color: Colors.deepPurple.shade900))),
-                            DataCell(Text(_formatCurrency(data['totalPrice'] as num?), style: TextStyle(color: Colors.deepPurple.shade900))),
-                            DataCell(Text(_formatTimestamp(data['createdAt'] as Timestamp?), style: TextStyle(color: Colors.deepPurple.shade900))),
+                            DataCell(Text(data['carName'] ?? '-')),
+                            DataCell(Text(_formatCurrency(data['buyPrice'] as num?))),
+                            DataCell(Text(data['name'] ?? '-')),
+                            DataCell(Text(data['contact'] ?? '-')),
+                            DataCell(Text(data['email'] ?? '-')),
+                            DataCell(Text(data['address'] ?? '-')),
+                            DataCell(Text(data['notes'] ?? '-')),
+                            DataCell(Text(_formatTimestamp(data['createdAt'] as Timestamp?))),
                           ]);
                         }).toList(),
                       ),

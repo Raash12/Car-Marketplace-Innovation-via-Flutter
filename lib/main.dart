@@ -42,7 +42,7 @@ class MyApp extends StatelessWidget {
         '/viewCarUser': (context) => const ViewUserCarPage(),
         '/feedbackReport': (context) => const FeedbackReportPage(),
           '/rentalReport': (context) => const RentalReportWidget(),  // Add rental report route
-        '/buyReport': (context) => const BuyReportWidget(), 
+        '/buyReport': (context) =>  BuyReportPage(), 
       },
     );
   }
