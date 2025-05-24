@@ -140,7 +140,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
         color: Colors.teal,
         onTap: () {
           Navigator.push(context,
-              MaterialPageRoute(builder: (context) =>  BuyReportPage()));
+              MaterialPageRoute(builder: (context) => BuyReportPage()));
         },
       ),
     ];
@@ -182,7 +182,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             if (isLargeScreen)
               SizedBox(
                 width: 250,
-                child: _buildSidebar(), // Permanent Sidebar
+                child: _buildSidebar(),
               ),
             Expanded(
               child: SingleChildScrollView(
@@ -279,7 +279,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  // Sidebar similar to drawer but permanent
   Widget _buildSidebar() {
     return Container(
       color: Colors.white,
@@ -345,7 +344,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             onTap: () {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) =>  LoginScreen()),
+                MaterialPageRoute(builder: (context) => LoginScreen()),
               );
             },
           ),
@@ -368,14 +367,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   Widget _buildDrawer() {
     return Drawer(
-      child: _buildSidebar(), // reuse sidebar content
+      child: _buildSidebar(),
     );
   }
 
   Widget _buildCardGridFlexible(List<Widget> cards) {
     final width = MediaQuery.of(context).size.width;
-    final horizontalPadding = 24 * 2; // padding on left and right
-    final spacing = 16 * 2; // two gaps between 3 cards per row
+    final horizontalPadding = 24 * 2;
+    final spacing = 16 * 2;
     final cardWidth = (width - horizontalPadding - spacing) / 3;
 
     List<Widget> cardWidgets = [];
@@ -471,13 +470,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
               backgroundColor: color,
               child: Icon(icon, color: Colors.white, size: 22),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             Text(
               label,
               style: TextStyle(
                 fontSize: 14,
-                color: color.withOpacity(0.7),
                 fontWeight: FontWeight.w600,
+                color: color,
               ),
             ),
           ],

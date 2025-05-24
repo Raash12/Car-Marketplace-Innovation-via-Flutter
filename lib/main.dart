@@ -12,6 +12,7 @@ import 'package:carmarketplace/screens/viewcar_user.dart';
 
 import 'package:carmarketplace/screens/rental_report.dart';
 import 'package:carmarketplace/screens/feedbackreport.dart';
+import 'package:carmarketplace/screens/add_rental_car.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,19 +32,19 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const WelcomeScreen(), // Start from the welcome screen
-      routes: {
-        '/welcome': (context) => const WelcomeScreen(),
-        '/login': (context) =>  LoginScreen(),
-        '/register': (context) => const RegistrationScreen(),
-        '/adminDashboard': (context) => const AdminDashboard(),
-        '/addCar': (context) => const AddCarPage(),
-        '/viewCars': (context) => const ViewCarPage(),
-        '/viewCarUser': (context) => const ViewUserCarPage(),
-        '/feedbackReport': (context) => const FeedbackReportPage(),
-          '/rentalReport': (context) => const RentalReportWidget(),  // Add rental report route
-        '/buyReport': (context) =>  BuyReportPage(), 
-      },
+      home: const AddRentalCarPage(), // Start from the welcome screen
+      // routes: {
+      //   '/welcome': (context) => const WelcomeScreen(),
+      //   '/login': (context) =>  LoginScreen(),
+      //   '/register': (context) => const RegistrationScreen(),
+      //   '/adminDashboard': (context) => const AdminDashboard(),
+      //   '/addCar': (context) => const AddCarPage(),
+      //   '/viewCars': (context) => const ViewCarPage(),
+      //   '/viewCarUser': (context) => const ViewUserCarPage(),
+      //   '/feedbackReport': (context) => const FeedbackReportPage(),
+      //     '/rentalReport': (context) => const RentalReportWidget(),  // Add rental report route
+      //   '/buyReport': (context) =>  BuyReportPage(), 
+      // },
     );
   }
 }
