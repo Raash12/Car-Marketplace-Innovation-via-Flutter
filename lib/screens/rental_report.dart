@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 class RentalReportWidget extends StatefulWidget {
   const RentalReportWidget({super.key});
@@ -11,6 +14,7 @@ class RentalReportWidget extends StatefulWidget {
 
 class _RentalReportWidgetState extends State<RentalReportWidget> {
   final DateFormat _dateFormat = DateFormat('yyyy-MM-dd');
+  final DateFormat _pdfDateFormat = DateFormat('d/M/yyyy');
   DateTime? _startDate;
   DateTime? _endDate;
   String _searchQuery = '';
@@ -169,17 +173,123 @@ class _RentalReportWidgetState extends State<RentalReportWidget> {
     );
   }
 
+  Future<void> _generatePdf() async {
+    final pdf = pw.Document();
+    final currentDate = _pdfDateFormat.format(DateTime.now());
+
+    pdf.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.a4,
+        build: (pw.Context context) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text(
+                    'Rental Report',
+                    style: pw.TextStyle(
+                      fontSize: 24,
+                      fontWeight: pw.FontWeight.bold,
+                      color: PdfColors.purple,
+                    ),
+                  ),
+                  pw.Text(
+                    'Date: $currentDate',
+                    style: pw.TextStyle(
+                      fontSize: 12,
+                      color: PdfColors.grey600,
+                    ),
+                  ),
+                ],
+              ),
+              pw.SizedBox(height: 10),
+              pw.Row(
+                children: [
+                  pw.Text(
+                    'Date Range: ',
+                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                  ),
+                  pw.Text(
+                    _startDate != null ? _pdfDateFormat.format(_startDate!) : 'All',
+                  ),
+                  pw.Text(' - '),
+                  pw.Text(
+                    _endDate != null ? _pdfDateFormat.format(_endDate!) : 'All',
+                  ),
+                ],
+              ),
+              pw.SizedBox(height: 20),
+              pw.Table.fromTextArray(
+                context: context,
+                border: pw.TableBorder.all(color: PdfColors.purple),
+                headerStyle: pw.TextStyle(
+                  fontWeight: pw.FontWeight.bold,
+                  color: PdfColors.white,
+                ),
+                headerDecoration: pw.BoxDecoration(color: PdfColors.purple),
+                headers: [
+                  'Car',
+                  'Customer',
+                  'Contact',
+                  'Rent/Day',
+                  'Days',
+                  'Total',
+                  'Start Date',
+                  'End Date'
+                ],
+                data: _filteredDocs.map((doc) {
+                  final data = doc.data() as Map<String, dynamic>;
+                  return [
+                    data['carName'] ?? '-',
+                    data['name'] ?? '-',
+                    data['contact'] ?? '-',
+                    _formatCurrency(data['rentPrice'] as num?),
+                    '${data['days'] ?? 0}',
+                    _formatCurrency(data['totalPrice'] as num?),
+                    _pdfDateFormat.format((data['startDate'] as Timestamp).toDate()),
+                    _pdfDateFormat.format((data['endDate'] as Timestamp).toDate()),
+                  ];
+                }).toList(),
+              ),
+              pw.SizedBox(height: 20),
+              pw.Align(
+                alignment: pw.Alignment.centerRight,
+                child: pw.Text(
+                  'Total Records: ${_filteredDocs.length}',
+                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    await Printing.layoutPdf(
+      onLayout: (PdfPageFormat format) async => pdf.save(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.deepPurple.shade700,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text('Rental Report'),
+        title: const Text('Rental Report', style: TextStyle(color: Colors.white)),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.print, color: Colors.white),
+            onPressed: _generatePdf,
+            tooltip: 'Generate PDF',
+          ),
+        ],
       ),
       body: Container(
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),

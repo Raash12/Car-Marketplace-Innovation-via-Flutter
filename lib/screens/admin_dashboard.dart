@@ -146,6 +146,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
       ),
     ];
 
+    final isLargeScreen = MediaQuery.of(context).size.width >= 600;
+
     return Scaffold(
       backgroundColor: Colors.white,
       drawer: _buildDrawer(), // Your sidebar restored
@@ -155,12 +157,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         foregroundColor: Colors.deepPurple,
-        leading: Builder(
-          builder: (context) => IconButton(
-            icon: const Icon(Icons.menu, color: Colors.deepPurple),
-            onPressed: () => Scaffold.of(context).openDrawer(),
-          ),
-        ),
+        leading: isLargeScreen
+            ? null
+            : Builder(
+                builder: (context) => IconButton(
+                  icon: const Icon(Icons.menu, color: Colors.deepPurple),
+                  onPressed: () => Scaffold.of(context).openDrawer(),
+                ),
+              ),
         actions: [
           IconButton(
             icon: const Icon(Icons.feedback, color: Colors.deepPurple),
@@ -174,86 +178,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
         ],
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(vertical: 24),
-          child: Column(
-            children: [
-              AspectRatio(
-                aspectRatio: 16 / 9,
-                child: imagePaths.isEmpty
-                    ? const Center(
-                        child: Text(
-                          'No images available.',
-                          style: TextStyle(fontSize: 18, color: Colors.black54),
-                        ),
-                      )
-                    : PageView.builder(
-                        controller: _pageController,
-                        itemCount: imagePaths.length,
-                        onPageChanged: (index) => setState(() => _currentPage = index),
-                        itemBuilder: (context, index) {
-                          final imagePath = imagePaths[index];
-                          return AnimatedBuilder(
-                            animation: _pageController,
-                            builder: (context, child) {
-                              double value = 1.0;
-                              if (_pageController.position.haveDimensions) {
-                                value = _pageController.page! - index;
-                                value = (1 - (value.abs() * 0.3)).clamp(0.0, 1.0);
-                              }
-                              return Transform.scale(scale: value, child: child);
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(16),
-                                child: Stack(
-                                  fit: StackFit.expand,
-                                  children: [
-                                    Image.asset(imagePath, fit: BoxFit.cover),
-                                    Container(
-                                      decoration: BoxDecoration(
-                                        gradient: LinearGradient(
-                                          begin: Alignment.bottomCenter,
-                                          end: Alignment.topCenter,
-                                          colors: [
-                                            Colors.black.withOpacity(0.7),
-                                            Colors.transparent,
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                    Positioned(
-                                      left: 20,
-                                      bottom: 50,
-                                      child: Text(
-                                        titles[index],
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                    Positioned(
-                                      left: 20,
-                                      bottom: 20,
-                                      right: 20,
-                                      child: Text(
-                                        descriptions[index],
-                                        style: const TextStyle(
-                                          color: Colors.white70,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
+        child: Row(
+          children: [
+            if (isLargeScreen)
+              SizedBox(
+                width: 250,
+                child: _buildSidebar(), // Permanent Sidebar
               ),
               const SizedBox(height: 24),
 
@@ -264,7 +194,99 @@ class _AdminDashboardState extends State<AdminDashboard> {
             ],
           ),
         ),
+      );
+  }
+
+  // Sidebar similar to drawer but permanent
+  Widget _buildSidebar() {
+    return Container(
+      color: Colors.white,
+      child: Column(
+        children: [
+          Container(
+            height: 120,
+            color: Colors.deepPurple,
+            child: const Center(
+              child: Text(
+                'Admin Panel',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+          _buildSidebarItem(
+            icon: Icons.add_circle_outline,
+            label: 'Add Car',
+            onTap: () {
+              Navigator.push(
+                  context, MaterialPageRoute(builder: (context) => const AddCarPage()));
+            },
+          ),
+          _buildSidebarItem(
+            icon: Icons.directions_car,
+            label: 'View Cars',
+            onTap: () {
+              Navigator.push(
+                  context, MaterialPageRoute(builder: (context) => const ViewCarPage()));
+            },
+          ),
+          _buildSidebarItem(
+            icon: Icons.feedback,
+            label: 'Feedback',
+            onTap: () {
+              Navigator.push(
+                  context, MaterialPageRoute(builder: (context) => const FeedbackReportPage()));
+            },
+          ),
+          _buildSidebarItem(
+            icon: Icons.analytics,
+            label: 'Rental Reports',
+            onTap: () {
+              Navigator.push(
+                  context, MaterialPageRoute(builder: (context) => const RentalReportWidget()));
+            },
+          ),
+          _buildSidebarItem(
+            icon: Icons.receipt_long,
+            label: 'Buy Reports',
+            onTap: () {
+              Navigator.push(
+                  context, MaterialPageRoute(builder: (context) => const BuyReportWidget()));
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.logout, color: Colors.deepPurple),
+            title: const Text('Logout'),
+            onTap: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) =>  LoginScreen()),
+              );
+            },
+          ),
+        ],
       ),
+    );
+  }
+
+  Widget _buildSidebarItem({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      leading: Icon(icon, color: Colors.deepPurple),
+      title: Text(label),
+      onTap: onTap,
+    );
+  }
+
+  Widget _buildDrawer() {
+    return Drawer(
+      child: _buildSidebar(), // reuse sidebar content
     );
   }
 
@@ -303,36 +325,36 @@ class _AdminDashboardState extends State<AdminDashboard> {
     required Color color,
   }) {
     return InkWell(
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(8),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
           color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(color: color.withOpacity(0.3)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             CircleAvatar(
-              radius: 20,
+              radius: 18,
               backgroundColor: color,
-              child: Icon(icon, color: Colors.white, size: 24),
+              child: Icon(icon, color: Colors.white, size: 20),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             Text(
               count,
               style: TextStyle(
-                fontSize: 28,
+                fontSize: 24,
                 fontWeight: FontWeight.bold,
                 color: color,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Text(
               title,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 12,
                 color: color.withOpacity(0.7),
                 fontWeight: FontWeight.w600,
               ),
@@ -350,67 +372,31 @@ class _AdminDashboardState extends State<AdminDashboard> {
     required VoidCallback onTap,
   }) {
     return InkWell(
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(8),
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 20),
+        padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
           color: color.withOpacity(0.15),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(color: color.withOpacity(0.3)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             CircleAvatar(
-              radius: 22,
+              radius: 18,
               backgroundColor: color,
-              child: Icon(icon, color: Colors.white, size: 26),
+              child: Icon(icon, color: Colors.white, size: 22),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
             Text(
               label,
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 14,
                 color: color.withOpacity(0.7),
                 fontWeight: FontWeight.w600,
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDrawer() {
-    return Drawer(
-      child: Container(
-        color: Colors.white,
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(color: Colors.deepPurple),
-              child: Center(
-                child: Text(
-                  'Admin Panel',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.logout, color: Colors.deepPurple),
-              title: const Text('Logout'),
-              onTap: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) =>  LoginScreen()),
-                );
-              },
             ),
           ],
         ),
