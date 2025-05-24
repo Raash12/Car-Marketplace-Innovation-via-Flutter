@@ -233,7 +233,6 @@ class _BuyReportPageState extends State<BuyReportPage> {
         title: const Text('Buy Report', style: TextStyle(color: Colors.white)),
         centerTitle: true,
         actions: [
-        
           IconButton(
             icon: const Icon(Icons.picture_as_pdf, color: Colors.white),
             tooltip: 'Export as PDF',
