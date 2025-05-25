@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class EditCarPage extends StatefulWidget {
+class Edit_rent_CarPage extends StatefulWidget {
   final String docId;
   final Map<String, dynamic> carData;
 
-  const EditCarPage({super.key, required this.docId, required this.carData});
+  const Edit_rent_CarPage({super.key, required this.docId, required this.carData});
 
   @override
-  State<EditCarPage> createState() => _EditCarPageState();
+  State<Edit_rent_CarPage> createState() => _EditCarPageState();
 }
 
-class _EditCarPageState extends State<EditCarPage> {
+class _EditCarPageState extends State<Edit_rent_CarPage> {
   final _formKey = GlobalKey<FormState>();
 
   late TextEditingController _nameController;
-  late TextEditingController _buyPriceController;
   late TextEditingController _rentPriceController;
+ 
 
   String currentImageUrl = '';
   String? _selectedFuelType;
@@ -30,10 +30,9 @@ class _EditCarPageState extends State<EditCarPage> {
     final specs = car['specifications'] ?? {};
 
     _nameController = TextEditingController(text: car['name'] ?? '');
-    _buyPriceController =
-        TextEditingController(text: (car['buyPrice'] ?? '').toString());
     _rentPriceController =
-        TextEditingController(text: (car['rentPrice'] ?? '').toString());
+        TextEditingController(text: (car['rentalPrice'] ?? '').toString());
+  
 
     _selectedFuelType = specs['fuelType']?.toString().trim();
     if (_selectedFuelType == null || !_fuelTypes.contains(_selectedFuelType)) {
@@ -47,12 +46,12 @@ class _EditCarPageState extends State<EditCarPage> {
     if (_formKey.currentState!.validate()) {
       try {
         await FirebaseFirestore.instance
-            .collection('carlist')
+            .collection('rental_cars')
             .doc(widget.docId)
             .update({
           'name': _nameController.text.trim(),
-          'buyPrice': double.tryParse(_buyPriceController.text.trim()) ?? 0,
-          'rentPrice': double.tryParse(_rentPriceController.text.trim()) ?? 0,
+          'rentalPrice': double.tryParse(_rentPriceController.text.trim()) ?? 0,
+        
           'specifications': {
             'fuelType': _selectedFuelType ?? '',
           }
@@ -74,8 +73,8 @@ class _EditCarPageState extends State<EditCarPage> {
   @override
   void dispose() {
     _nameController.dispose();
-    _buyPriceController.dispose();
     _rentPriceController.dispose();
+   
     super.dispose();
   }
 
@@ -107,7 +106,7 @@ class _EditCarPageState extends State<EditCarPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Edit Car'),
+        title: const Text('Edit rent Car'),
         backgroundColor: Colors.deepPurple,
         foregroundColor: Colors.white,
       ),
@@ -136,20 +135,13 @@ class _EditCarPageState extends State<EditCarPage> {
               ),
               const SizedBox(height: 16),
               TextFormField(
-                controller: _buyPriceController,
-                decoration: _inputDecoration('Buy Price'),
-                keyboardType: TextInputType.number,
-                validator: (value) =>
-                    value == null || value.isEmpty ? 'Enter buy price' : null,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
                 controller: _rentPriceController,
                 decoration: _inputDecoration('Rent Price'),
                 keyboardType: TextInputType.number,
                 validator: (value) =>
                     value == null || value.isEmpty ? 'Enter rent price' : null,
               ),
+             
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 decoration: InputDecoration(

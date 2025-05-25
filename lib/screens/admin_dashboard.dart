@@ -1,6 +1,9 @@
+import 'package:carmarketplace/screens/add_rental_car.dart';
+import 'package:carmarketplace/screens/addmin_buy_viewcar.dart';
+import 'package:carmarketplace/screens/addmin_view_rental_car_user.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:carmarketplace/screens/viewcar.dart';
+
 import 'package:carmarketplace/screens/addcar.dart';
 import 'package:carmarketplace/screens/rental_report.dart';
 import 'package:carmarketplace/screens/login_screen.dart';
@@ -32,125 +35,142 @@ class _AdminDashboardState extends State<AdminDashboard> {
   ];
 
   late final PageController _pageController;
-  int _currentPage = 0;
-  int totalCars = 0;
-  int totalBuys = 0;
-  int totalRentals = 0;
+int _currentPage = 0;
+int totalCars = 0;
+int totalBuys = 0;
+int totalRentals = 0;
+int rentalCars = 0;
 
-  @override
-  void initState() {
-    super.initState();
-    _pageController = PageController(viewportFraction: 0.9);
-    _startAutoPlay();
-    _fetchCounts();
-  }
+@override
+void initState() {
+  super.initState();
+  _pageController = PageController(viewportFraction: 0.9);
+  _startAutoPlay();
+  _fetchCounts();
+}
 
-  Future<void> _fetchCounts() async {
-    final firestore = FirebaseFirestore.instance;
-    try {
-      final carSnapshot = await firestore.collection('carlist').get();
-      final buySnapshot = await firestore.collection('buy').get();
-      final rentalSnapshot = await firestore.collection('rental').get();
-      setState(() {
-        totalCars = carSnapshot.docs.length;
-        totalBuys = buySnapshot.docs.length;
-        totalRentals = rentalSnapshot.docs.length;
-      });
-    } catch (e) {
-      debugPrint('Error fetching counts: $e');
-    }
-  }
-
-  void _startAutoPlay() {
-    Future.delayed(const Duration(seconds: 3), () {
-      if (!mounted) return;
-      if (_currentPage < imagePaths.length - 1) {
-        _currentPage++;
-      } else {
-        _currentPage = 0;
-      }
-      if (_pageController.hasClients && imagePaths.isNotEmpty) {
-        _pageController.animateToPage(
-          _currentPage,
-          duration: const Duration(milliseconds: 800),
-          curve: Curves.easeInOutQuint,
-        );
-      }
-      _startAutoPlay();
+Future<void> _fetchCounts() async {
+  final firestore = FirebaseFirestore.instance;
+  try {
+    final carSnapshot = await firestore.collection('carlist').get();
+    final buySnapshot = await firestore.collection('buy').get();
+    final rentalSnapshot = await firestore.collection('rental').get();
+    final rentalsSnapshot = await firestore.collection('rental_cars').get();
+    setState(() {
+      totalCars = carSnapshot.docs.length;
+      totalBuys = buySnapshot.docs.length;
+      totalRentals = rentalSnapshot.docs.length;
+      rentalCars = rentalsSnapshot.docs.length;
     });
+  } catch (e) {
+    debugPrint('Error fetching counts: $e');
   }
+}
 
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
+void _startAutoPlay() {
+  Future.delayed(const Duration(seconds: 3), () {
+    if (!mounted) return;
+    if (_currentPage < imagePaths.length - 1) {
+      _currentPage++;
+    } else {
+      _currentPage = 0;
+    }
+    if (_pageController.hasClients && imagePaths.isNotEmpty) {
+      _pageController.animateToPage(
+        _currentPage,
+        duration: const Duration(milliseconds: 800),
+        curve: Curves.easeInOutQuint,
+      );
+    }
+    _startAutoPlay();
+  });
+}
 
-  @override
-  Widget build(BuildContext context) {
-    // Your 7 cards
-    final List<Widget> cards = [
-      _buildStatCard(
-        icon: Icons.directions_car_filled,
-        title: 'Total Cars',
-        count: totalCars.toString(),
-        color: Colors.lightBlueAccent,
-      ),
-      _buildStatCard(
-        icon: Icons.car_rental,
-        title: 'Total Rentals',
-        count: totalRentals.toString(),
-        color: Colors.deepPurpleAccent,
-      ),
-      _buildStatCard(
-        icon: Icons.shopping_cart,
-        title: 'Total Buys',
-        count: totalBuys.toString(),
-        color: Colors.orangeAccent,
-      ),
-      _buildQuickAction(
-        icon: Icons.add_circle_outline,
-        label: 'Add Car',
-        color: Colors.green,
-        onTap: () {
-          Navigator.push(
-              context, MaterialPageRoute(builder: (context) => const AddCarPage()));
-        },
-      ),
-      _buildQuickAction(
-        icon: Icons.directions_car,
-        label: 'View Cars',
-        color: Colors.blue,
-        onTap: () {
-          Navigator.push(
-              context, MaterialPageRoute(builder: (context) => const ViewCarPage()));
-        },
-      ),
-      _buildQuickAction(
-        icon: Icons.analytics,
-        label: 'Rental Reports',
-        color: Colors.purple,
-        onTap: () {
-          Navigator.push(context,
-              MaterialPageRoute(builder: (context) => const RentalReportWidget()));
-        },
-      ),
-      _buildQuickAction(
-        icon: Icons.receipt_long,
-        label: 'Buy Reports',
-        color: Colors.teal,
-        onTap: () {
-          Navigator.push(context,
-              MaterialPageRoute(builder: (context) =>  BuyReportPage()));
-        },
-      ),
-    ];
+@override
+void dispose() {
+  _pageController.dispose();
+  super.dispose();
+}
+
+@override
+Widget build(BuildContext context) {
+  final List<Widget> cards = [
+    _buildStatCard(
+      icon: Icons.directions_car_filled,
+      title: 'Total Buy Cars',
+      count: totalCars.toString(),
+      color: Colors.lightBlueAccent,
+    ),
+    _buildStatCard(
+      icon: Icons.car_rental,
+      title: 'Total Rentals',
+      count: totalRentals.toString(),
+      color: Colors.deepPurpleAccent,
+    ),
+    _buildStatCard(
+      icon: Icons.shopping_cart,
+      title: 'Total Buys',
+      count: totalBuys.toString(),
+      color: Colors.orangeAccent,
+    ),
+    _buildQuickAction(
+      icon: Icons.add_circle_outline,
+      label: 'Add Buy Car',
+      color: Colors.green,
+      onTap: () {
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) => const AddCarPage()));
+      },
+    ),
+     _buildQuickAction(
+      icon: Icons.add_circle_outline,
+      label: 'Add Rent Car',
+      color: Colors.blueAccent,
+      onTap: () {
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) => const AddRentalCarPage()));
+      },
+    ),
+    _buildQuickAction(
+      icon: Icons.directions_car,
+      label: 'View Buy Cars',
+      color: Colors.blue,
+      onTap: () {
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) => const admin_buy_ViewCarPage()));
+      },
+    ),
+    _buildQuickAction(
+      icon: Icons.analytics,
+      label: 'Rental Reports',
+      color: Colors.purple,
+      onTap: () {
+        Navigator.push(context,
+            MaterialPageRoute(builder: (context) => const RentalReportWidget()));
+      },
+    ),
+    _buildQuickAction(
+      icon: Icons.receipt_long,
+      label: 'Buy Reports',
+      color: Colors.teal,
+      onTap: () {
+        Navigator.push(context,
+            MaterialPageRoute(builder: (context) => BuyReportPage()));
+      },
+    ),
+    _buildStatCard(
+      icon: Icons.shopping_cart,
+      title: 'Total Rental Cars',
+      count: rentalCars.toString(),
+      color: Colors.orangeAccent,
+    ),
+  ];
 
     final isLargeScreen = MediaQuery.of(context).size.width >= 600;
 
     return Scaffold(
       backgroundColor: Colors.white,
-      drawer: _buildDrawer(), // Your sidebar restored
+      drawer: isLargeScreen ? null : _buildDrawer(),
       appBar: AppBar(
         title: const Text('Car Marketplace Admin'),
         centerTitle: true,
@@ -183,21 +203,103 @@ class _AdminDashboardState extends State<AdminDashboard> {
             if (isLargeScreen)
               SizedBox(
                 width: 250,
-                child: _buildSidebar(), // Permanent Sidebar
+                child: _buildSidebar(),
               ),
-              const SizedBox(height: 24),
-
-              // Cards layout with 3 per row, last card full width if single in last row
-              _buildCardGridFlexible(cards),
-
-              const SizedBox(height: 16),
-            ],
-          ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: Column(
+                  children: [
+                    AspectRatio(
+                      aspectRatio: 16 / 9,
+                      child: imagePaths.isEmpty
+                          ? const Center(
+                              child: Text(
+                                'No images available.',
+                                style: TextStyle(fontSize: 18, color: Colors.black54),
+                              ),
+                            )
+                          : PageView.builder(
+                              controller: _pageController,
+                              itemCount: imagePaths.length,
+                              onPageChanged: (index) => setState(() => _currentPage = index),
+                              itemBuilder: (context, index) {
+                                final imagePath = imagePaths[index];
+                                return AnimatedBuilder(
+                                  animation: _pageController,
+                                  builder: (context, child) {
+                                    double value = 1.0;
+                                    if (_pageController.position.haveDimensions) {
+                                      value = _pageController.page! - index;
+                                      value = (1 - (value.abs() * 0.3)).clamp(0.0, 1.0);
+                                    }
+                                    return Transform.scale(scale: value, child: child);
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(16),
+                                      child: Stack(
+                                        fit: StackFit.expand,
+                                        children: [
+                                          Image.asset(imagePath, fit: BoxFit.cover),
+                                          Container(
+                                            decoration: BoxDecoration(
+                                              gradient: LinearGradient(
+                                                begin: Alignment.bottomCenter,
+                                                end: Alignment.topCenter,
+                                                colors: [
+                                                  Colors.black.withOpacity(0.7),
+                                                  Colors.transparent,
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                          Positioned(
+                                            left: 20,
+                                            bottom: 50,
+                                            child: Text(
+                                              titles[index],
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 20,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                          Positioned(
+                                            left: 20,
+                                            bottom: 20,
+                                            right: 20,
+                                            child: Text(
+                                              descriptions[index],
+                                              style: const TextStyle(
+                                                color: Colors.white70,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                    ),
+                    const SizedBox(height: 24),
+                    _buildCardGridFlexible(cards),
+                    const SizedBox(height: 16),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
-      );
+      ),
+    );
   }
 
-  // Sidebar similar to drawer but permanent
   Widget _buildSidebar() {
     return Container(
       color: Colors.white,
@@ -219,20 +321,29 @@ class _AdminDashboardState extends State<AdminDashboard> {
           ),
           _buildSidebarItem(
             icon: Icons.add_circle_outline,
-            label: 'Add Car',
+            label: 'Add Buy Car',
             onTap: () {
               Navigator.push(
                   context, MaterialPageRoute(builder: (context) => const AddCarPage()));
             },
           ),
           _buildSidebarItem(
-            icon: Icons.directions_car,
-            label: 'View Cars',
+            icon: Icons.add_circle_outline,
+            label: 'Add Rent Car',
             onTap: () {
               Navigator.push(
-                  context, MaterialPageRoute(builder: (context) => const ViewCarPage()));
+                  context, MaterialPageRoute(builder: (context) => const AddRentalCarPage()));
             },
           ),
+          _buildSidebarItem(
+            icon: Icons.directions_car,
+            label: 'View buy Cars',
+            onTap: () {
+              Navigator.push(
+                  context, MaterialPageRoute(builder: (context) => const admin_buy_ViewCarPage()));
+            },
+          ),
+          
           _buildSidebarItem(
             icon: Icons.feedback,
             label: 'Feedback',
@@ -263,7 +374,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             onTap: () {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) =>  LoginScreen()),
+                MaterialPageRoute(builder: (context) => LoginScreen()),
               );
             },
           ),
@@ -286,14 +397,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   Widget _buildDrawer() {
     return Drawer(
-      child: _buildSidebar(), // reuse sidebar content
+      child: _buildSidebar(),
     );
   }
 
   Widget _buildCardGridFlexible(List<Widget> cards) {
     final width = MediaQuery.of(context).size.width;
-    final horizontalPadding = 24 * 2; // same padding as body horizontal
-    final spacing = 16 * 2; // two gaps between 3 cards
+    final horizontalPadding = 24 * 2;
+    final spacing = 16 * 2;
     final cardWidth = (width - horizontalPadding - spacing) / 3;
 
     List<Widget> cardWidgets = [];
@@ -389,13 +500,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
               backgroundColor: color,
               child: Icon(icon, color: Colors.white, size: 22),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             Text(
               label,
               style: TextStyle(
                 fontSize: 14,
-                color: color.withOpacity(0.7),
                 fontWeight: FontWeight.w600,
+                color: color,
               ),
             ),
           ],

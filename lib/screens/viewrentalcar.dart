@@ -1,19 +1,20 @@
+import 'package:carmarketplace/screens/Rent.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:carmarketplace/screens/ViewDetailPage.dart';
-import 'package:carmarketplace/screens/Buy.dart';
 
 
 
-class ViewUserCarPage extends StatefulWidget {
-  const ViewUserCarPage({super.key});
+
+class ViewrentalCarPage extends StatefulWidget {
+  const ViewrentalCarPage({super.key});
 
   @override
-  State<ViewUserCarPage> createState() => _ViewUserCarPageState();
+  State<ViewrentalCarPage> createState() => _ViewUserCarPageState();
 }
 
-class _ViewUserCarPageState extends State<ViewUserCarPage> {
+class _ViewUserCarPageState extends State<ViewrentalCarPage> {
   String _searchQuery = '';
 
   @override
@@ -21,7 +22,7 @@ class _ViewUserCarPageState extends State<ViewUserCarPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFFFF8F0),
       appBar: AppBar(
-        title: const Text('Available Buy Cars'),
+        title: const Text('Available rental Cars'),
         backgroundColor: Colors.deepPurple,
         foregroundColor: Colors.white,
         elevation: 4,
@@ -55,7 +56,7 @@ class _ViewUserCarPageState extends State<ViewUserCarPage> {
       ),
   
       body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('carlist').snapshots(),
+        stream: FirebaseFirestore.instance.collection('rental_cars').snapshots(),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator(color: Colors.deepPurple));
@@ -67,12 +68,12 @@ class _ViewUserCarPageState extends State<ViewUserCarPage> {
             final specs = car['specifications'] ?? {};
             final name = (car['name'] ?? '').toString().toLowerCase();
             final fuelType = (specs['fuelType'] ?? '').toString().toLowerCase();
-            final buyPrice = (car['buyPrice'] ?? '').toString().toLowerCase();
+            final rentalPrice = (car['rentalPrice'] ?? '').toString().toLowerCase();
           
 
             return name.contains(_searchQuery) ||
                 fuelType.contains(_searchQuery) ||
-                buyPrice.contains(_searchQuery);
+                rentalPrice.contains(_searchQuery);
                 
           }).toList();
 
@@ -132,7 +133,7 @@ class _ViewUserCarPageState extends State<ViewUserCarPage> {
                                 style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.deepPurple),
                               ),
                               const SizedBox(height: 6),
-                              Text('Buy: \$${car['buyPrice'] ?? 'N/A'}', style: TextStyle(fontSize: 16, color: Colors.grey[700])),
+                              Text('rental: \$${car['rentalPrice'] ?? 'N/A'}', style: TextStyle(fontSize: 16, color: Colors.grey[700])),
                               Text('Fuel: ${specs['fuelType'] ?? 'N/A'}', style: TextStyle(fontSize: 16, color: Colors.grey[700])),
                             ],
                           ),
@@ -166,11 +167,11 @@ class _ViewUserCarPageState extends State<ViewUserCarPage> {
                             onPressed: () {
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (context) => BuyCarPage(carData: car)),
+                                MaterialPageRoute(builder: (context) => RentalPage(carData: car)),
                               );
                             },
                             icon: const Icon(Icons.shopping_bag_outlined),
-                            label: const Text('Buy'),
+                            label: const Text('rent'),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.green,
                               foregroundColor: Colors.white,

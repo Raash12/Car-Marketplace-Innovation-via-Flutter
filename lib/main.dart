@@ -49,6 +49,8 @@
 // }
 
 import 'package:carmarketplace/screens/buy_report.dart';
+import 'package:carmarketplace/screens/addmin_view_rental_car_user.dart';
+import 'package:carmarketplace/screens/viewrentalcar.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -57,11 +59,12 @@ import 'package:carmarketplace/screens/login_screen.dart';
 import 'package:carmarketplace/screens/register_screen.dart';
 import 'package:carmarketplace/screens/admin_dashboard.dart';
 import 'package:carmarketplace/screens/addcar.dart';
-import 'package:carmarketplace/screens/viewcar.dart';
+import 'package:carmarketplace/screens/addmin_buy_viewcar.dart';
 import 'package:carmarketplace/screens/viewcar_user.dart';
 
 import 'package:carmarketplace/screens/rental_report.dart';
 import 'package:carmarketplace/screens/feedbackreport.dart';
+import 'package:carmarketplace/screens/add_rental_car.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -81,7 +84,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const ViewUserCarPage(), // Start from the welcome screen
+      home: const AdminDashboard (), // viewStart from the welcome screen
      
     );
   }

@@ -48,23 +48,13 @@ class ViewDetailPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    carData['price'] != null
-                        ? '\$${carData['price']}'
-                        : 'Price N/A',
-                    style: const TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.deepPurple,
-                    ),
-                  ),
+                 
                   const SizedBox(height: 20),
 
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _buildInfoBox(
-                          'Quantity', '${carData['quantity'] ?? 'N/A'}'),
+                     
                       _buildInfoBox('Mileage', specs['mileage'] ?? 'N/A'),
                       _buildInfoBox('Fuel', specs['fuelType'] ?? 'N/A'),
                     ],

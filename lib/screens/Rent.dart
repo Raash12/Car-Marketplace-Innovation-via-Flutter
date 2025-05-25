@@ -40,7 +40,7 @@ class _RentalPageState extends State<RentalPage> {
   void _updateTotalPrice() {
     if (_startDate != null && _endDate != null && !_endDate!.isBefore(_startDate!)) {
       final rentalDays = _endDate!.difference(_startDate!).inDays + 1;
-      final pricePerDay = _parsePrice(widget.carData['rentPrice']);
+      final pricePerDay = _parsePrice(widget.carData['rentalPrice']);
       setState(() {
         _totalPrice = pricePerDay * rentalDays;
       });
@@ -131,7 +131,7 @@ class _RentalPageState extends State<RentalPage> {
 
   @override
   Widget build(BuildContext context) {
-    final pricePerDay = _parsePrice(widget.carData['rentPrice']);
+    final pricePerDay = _parsePrice(widget.carData['rentalPrice']);
 
     return Scaffold(
       appBar: AppBar(

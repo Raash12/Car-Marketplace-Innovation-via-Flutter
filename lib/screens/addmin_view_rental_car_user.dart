@@ -1,20 +1,21 @@
 import 'package:carmarketplace/screens/ViewDetailPage.dart';
-import 'package:carmarketplace/screens/addcar.dart';
-import 'package:carmarketplace/screens/editcar.dart';
+import 'package:carmarketplace/screens/add_rental_car.dart';
+
+import 'package:carmarketplace/screens/edit_Rent_car.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class ViewCarPage extends StatefulWidget {
-  const ViewCarPage({super.key});
+class admin_rental_ViewCarPage extends StatefulWidget {
+  const admin_rental_ViewCarPage({super.key});
 
   @override
-  State<ViewCarPage> createState() => _ViewCarPageState();
+  State<admin_rental_ViewCarPage> createState() => _ViewCarPageState();
 }
 
-class _ViewCarPageState extends State<ViewCarPage> {
+class _ViewCarPageState extends State<admin_rental_ViewCarPage> {
   Future<void> _deleteCar(String docId) async {
     try {
-      await FirebaseFirestore.instance.collection('carlist').doc(docId).delete();
+      await FirebaseFirestore.instance.collection('rental_cars').doc(docId).delete();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Car deleted successfully')),
       );
@@ -30,7 +31,7 @@ class _ViewCarPageState extends State<ViewCarPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFFFF8F0), // soft light orange bg
       appBar: AppBar(
-        title: const Text('Available Cars'),
+        title: const Text('admin Available Rent Cars'),
         backgroundColor: Colors.deepPurple,
         foregroundColor: Colors.white,
         elevation: 4,
@@ -41,14 +42,14 @@ class _ViewCarPageState extends State<ViewCarPage> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const AddCarPage()),
+                MaterialPageRoute(builder: (context) => const AddRentalCarPage()),
               );
             },
           ),
         ],
       ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('carlist').snapshots(),
+        stream: FirebaseFirestore.instance.collection('rental_cars').snapshots(),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return const Center(
@@ -124,19 +125,13 @@ class _ViewCarPageState extends State<ViewCarPage> {
                               ),
                               const SizedBox(height: 6),
                               Text(
-                                'Buy: \$${car['buyPrice'] ?? 'N/A'}',
+                                'Rent: \$${car['rentalPrice'] ?? 'N/A'}',
                                 style: TextStyle(
                                   fontSize: 16,
                                   color: Colors.grey[700],
                                 ),
                               ),
-                              Text(
-                                'Rent: \$${car['rentPrice'] ?? 'N/A'}',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.grey[700],
-                                ),
-                              ),
+                             
                               Text(
                                 'Fuel: ${specs['fuelType'] ?? 'N/A'}',
                                 style: TextStyle(
@@ -154,7 +149,7 @@ class _ViewCarPageState extends State<ViewCarPage> {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) => EditCarPage(
+                                          builder: (context) => Edit_rent_CarPage(
                                             docId: docId,
                                             carData: car,
                                           ),
