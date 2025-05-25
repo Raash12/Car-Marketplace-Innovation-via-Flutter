@@ -141,7 +141,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
         color: Colors.teal,
         onTap: () {
           Navigator.push(context,
-              MaterialPageRoute(builder: (context) => const BuyReportWidget()));
+              MaterialPageRoute(builder: (context) =>  BuyReportPage()));
         },
       ),
     ];
@@ -254,7 +254,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             label: 'Buy Reports',
             onTap: () {
               Navigator.push(
-                  context, MaterialPageRoute(builder: (context) => const BuyReportWidget()));
+                  context, MaterialPageRoute(builder: (context) => BuyReportPage()));
             },
           ),
           ListTile(

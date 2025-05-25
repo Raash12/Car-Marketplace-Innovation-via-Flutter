@@ -1,29 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
-class BuyReportWidget extends StatefulWidget {
-  const BuyReportWidget({super.key});
+class BuyReportPage extends StatefulWidget {
+  const BuyReportPage({super.key});
 
   @override
-  State<BuyReportWidget> createState() => _BuyReportWidgetState();
+  State<BuyReportPage> createState() => _BuyReportPageState();
 }
 
-class _BuyReportWidgetState extends State<BuyReportWidget> {
-  final DateFormat _dateFormat = DateFormat('yyyy-MM-dd');
+class _BuyReportPageState extends State<BuyReportPage> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
   DateTime? _startDate;
   DateTime? _endDate;
-  String _searchQuery = '';
   int? _sortColumnIndex;
   bool _sortAscending = true;
 
   List<QueryDocumentSnapshot> _allDocs = [];
   List<QueryDocumentSnapshot> _filteredDocs = [];
-
-  final TextEditingController _searchController = TextEditingController();
-
-  // Flag to prevent repeated filtering during build
-  bool _needsFilterUpdate = false;
 
   @override
   void initState() {
@@ -39,10 +37,8 @@ class _BuyReportWidgetState extends State<BuyReportWidget> {
   }
 
   void _onSearchChanged() {
-    setState(() {
-      _searchQuery = _searchController.text.trim();
-      _needsFilterUpdate = true;
-    });
+    setState(() => _searchQuery = _searchController.text);
+    _applyFilterAndSort();
   }
 
   Future<void> _pickDate(BuildContext context, bool isStartDate) async {
@@ -72,123 +68,157 @@ class _BuyReportWidgetState extends State<BuyReportWidget> {
         } else {
           _endDate = picked;
         }
-        _needsFilterUpdate = true;
       });
+      _applyFilterAndSort();
     }
   }
 
   String _formatCurrency(num? value) {
-    return value?.toStringAsFixed(2) ?? '0.00';
+    return '\$${value?.toStringAsFixed(2) ?? '0.00'}';
   }
 
   String _formatTimestamp(Timestamp? ts) {
-    return ts != null ? _dateFormat.format(ts.toDate()) : '-';
+    return ts != null ? DateFormat('yyyy-MM-dd – kk:mm').format(ts.toDate()) : '-';
+  }
+
+  bool _matchesDateRange(Timestamp timestamp) {
+    final date = timestamp.toDate();
+    if (_startDate != null && date.isBefore(_startDate!)) return false;
+    if (_endDate != null && date.isAfter(_endDate!)) return false;
+    return true;
   }
 
   void _applyFilterAndSort() {
-    if (_allDocs.isEmpty) {
-      setState(() {
-        _filteredDocs = [];
-        _needsFilterUpdate = false;
-      });
-      return;
-    }
-
     List<QueryDocumentSnapshot> docs = _allDocs.where((doc) {
       final data = doc.data() as Map<String, dynamic>;
-      final date = (data['createdAt'] as Timestamp?)?.toDate();
+      final createdAt = data['createdAt'] as Timestamp?;
+      final query = _searchQuery.toLowerCase();
 
-      // Date filtering
-      if (_startDate != null && date != null && date.isBefore(_startDate!)) return false;
-      if (_endDate != null && date != null && date.isAfter(_endDate!)) return false;
+      if (createdAt != null && !_matchesDateRange(createdAt)) return false;
 
       if (_searchQuery.isNotEmpty) {
-        final q = _searchQuery.toLowerCase();
-
-        // Search in multiple fields: carName, name, contact, price, quantity, totalPrice, date string
-        final carName = (data['carName'] ?? '').toString().toLowerCase();
-        final customerName = (data['name'] ?? '').toString().toLowerCase();
-        final contact = (data['contact'] ?? '').toString().toLowerCase();
-        final price = (data['buyPrice']?.toString() ?? '').toLowerCase();
-        final quantity = (data['quantity']?.toString() ?? '').toLowerCase();
-        final totalPrice = (data['totalPrice']?.toString() ?? '').toLowerCase();
-        final createdAtStr = date != null ? _dateFormat.format(date).toLowerCase() : '';
-
-        if (!(carName.contains(q) ||
-            customerName.contains(q) ||
-            contact.contains(q) ||
-            price.contains(q) ||
-            quantity.contains(q) ||
-            totalPrice.contains(q) ||
-            createdAtStr.contains(q))) {
+        final carName = data['carName']?.toString().toLowerCase() ?? '';
+        final buyerName = data['name']?.toString().toLowerCase() ?? '';
+        final contact = data['contact']?.toString().toLowerCase() ?? '';
+        final address = data['address']?.toString().toLowerCase() ?? '';
+        if (!carName.contains(query) &&
+            !buyerName.contains(query) &&
+            !contact.contains(query) &&
+            !address.contains(query)) {
           return false;
         }
       }
-
       return true;
     }).toList();
 
-    // Sorting
     if (_sortColumnIndex != null) {
       docs.sort((a, b) {
         final aData = a.data() as Map<String, dynamic>;
         final bData = b.data() as Map<String, dynamic>;
 
-        int cmp;
-
         switch (_sortColumnIndex) {
           case 0:
-            cmp = (aData['carName'] ?? '').toString().compareTo((bData['carName'] ?? '').toString());
-            break;
+            return _sortAscending
+                ? (aData['carName'] ?? '').compareTo(bData['carName'] ?? '')
+                : (bData['carName'] ?? '').compareTo(aData['carName'] ?? '');
           case 1:
-            cmp = (aData['name'] ?? '').toString().compareTo((bData['name'] ?? '').toString());
-            break;
+            return _sortAscending
+                ? ((aData['buyPrice'] as num?) ?? 0).compareTo((bData['buyPrice'] as num?) ?? 0)
+                : ((bData['buyPrice'] as num?) ?? 0).compareTo((aData['buyPrice'] as num?) ?? 0);
           case 2:
-            cmp = (aData['contact'] ?? '').toString().compareTo((bData['contact'] ?? '').toString());
-            break;
+            return _sortAscending
+                ? (aData['name'] ?? '').compareTo(bData['name'] ?? '')
+                : (bData['name'] ?? '').compareTo(aData['name'] ?? '');
           case 3:
-            cmp = ((aData['buyPrice'] as num?) ?? 0).compareTo((bData['buyPrice'] as num?) ?? 0);
-            break;
+            return _sortAscending
+                ? (aData['contact'] ?? '').compareTo(bData['contact'] ?? '')
+                : (bData['contact'] ?? '').compareTo(aData['contact'] ?? '');
           case 4:
-            cmp = ((aData['quantity'] as num?) ?? 0).compareTo((bData['quantity'] as num?) ?? 0);
-            break;
+            return _sortAscending
+                ? (aData['email'] ?? '').compareTo(bData['email'] ?? '')
+                : (bData['email'] ?? '').compareTo(aData['email'] ?? '');
           case 5:
-            cmp = ((aData['totalPrice'] as num?) ?? 0).compareTo((bData['totalPrice'] as num?) ?? 0);
-            break;
+            return _sortAscending
+                ? (aData['address'] ?? '').compareTo(bData['address'] ?? '')
+                : (bData['address'] ?? '').compareTo(aData['address'] ?? '');
           case 6:
-            cmp = ((aData['createdAt'] as Timestamp?) ?? Timestamp(0, 0))
-                .compareTo((bData['createdAt'] as Timestamp?) ?? Timestamp(0, 0));
-            break;
+            return _sortAscending
+                ? (aData['notes'] ?? '').compareTo(bData['notes'] ?? '')
+                : (bData['notes'] ?? '').compareTo(aData['notes'] ?? '');
+          case 7:
+            return _sortAscending
+                ? ((aData['createdAt'] as Timestamp?) ?? Timestamp(0, 0)).compareTo(
+                    (bData['createdAt'] as Timestamp?) ?? Timestamp(0, 0))
+                : ((bData['createdAt'] as Timestamp?) ?? Timestamp(0, 0)).compareTo(
+                    (aData['createdAt'] as Timestamp?) ?? Timestamp(0, 0));
           default:
-            cmp = 0;
+            return 0;
         }
-        return _sortAscending ? cmp : -cmp;
       });
     }
 
-    setState(() {
-      _filteredDocs = docs;
-      _needsFilterUpdate = false;
-    });
+    setState(() => _filteredDocs = docs);
   }
 
-  void _onSort(int columnIndex, bool ascending) {
+  void onSort(int columnIndex, bool ascending) {
     setState(() {
       _sortColumnIndex = columnIndex;
       _sortAscending = ascending;
-      _needsFilterUpdate = true;
     });
+    _applyFilterAndSort();
   }
 
-  Widget _header(String text) {
-    return Text(
-      text,
-      style: const TextStyle(
-        fontWeight: FontWeight.w600,
-        color: Colors.deepPurple,
-        fontSize: 14,
+  Future<void> _generatePdf() async {
+    final pdf = pw.Document();
+    final currentDate = DateFormat('M/d/yyyy').format(DateTime.now());
+
+    pdf.addPage(
+      pw.MultiPage(
+        build: (context) => [
+          pw.Text('Buy Report', style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
+          pw.Text('Report Date: $currentDate', style: const pw.TextStyle(fontSize: 12)),
+          pw.SizedBox(height: 16),
+          if (_startDate != null && _endDate != null)
+            pw.Text(
+              'Date Range: ${DateFormat('d/M/yyyy').format(_startDate!)} to ${DateFormat('d/M/yyyy').format(_endDate!)}',
+              style: const pw.TextStyle(fontSize: 12),
+            ),
+          pw.SizedBox(height: 16),
+          pw.Table.fromTextArray(
+            headers: ['Car', 'Price', 'Buyer', 'Contact', 'Email', 'Address', 'Notes', 'Date'],
+            headerStyle: pw.TextStyle(
+              fontWeight: pw.FontWeight.bold,
+              color: PdfColors.white,
+            ),
+            headerDecoration: pw.BoxDecoration(color: PdfColors.purple),
+            border: pw.TableBorder.all(color: PdfColors.purple),
+            data: _filteredDocs.map((doc) {
+              final data = doc.data() as Map<String, dynamic>;
+              return [
+                data['carName'] ?? '-',
+                _formatCurrency(data['buyPrice'] as num?),
+                data['name'] ?? '-',
+                data['contact'] ?? '-',
+                data['email'] ?? '-',
+                data['address'] ?? '-',
+                data['notes'] ?? '-',
+                _formatTimestamp(data['createdAt'] as Timestamp?),
+              ];
+            }).toList(),
+          ),
+          pw.SizedBox(height: 16),
+          pw.Align(
+            alignment: pw.Alignment.centerRight,
+            child: pw.Text(
+              'Total Records: ${_filteredDocs.length}',
+              style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+            ),
+          ),
+        ],
       ),
     );
+
+    await Printing.layoutPdf(onLayout: (_) => pdf.save());
   }
 
   @override
@@ -197,11 +227,18 @@ class _BuyReportWidgetState extends State<BuyReportWidget> {
       appBar: AppBar(
         backgroundColor: Colors.deepPurple.shade700,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text('Buy Report'),
+        title: const Text('Buy Report', style: TextStyle(color: Colors.white)),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.picture_as_pdf, color: Colors.white),
+            tooltip: 'Export as PDF',
+            onPressed: _generatePdf,
+          ),
+        ],
       ),
       body: Container(
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
@@ -219,38 +256,36 @@ class _BuyReportWidgetState extends State<BuyReportWidget> {
                     Row(
                       children: [
                         Expanded(
-                          child: OutlinedButton.icon(
+                          child: OutlinedButton(
                             style: OutlinedButton.styleFrom(
                               foregroundColor: Colors.deepPurple,
                               side: BorderSide(color: Colors.deepPurple.shade300),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                             ),
-                            icon: const Icon(Icons.date_range),
-                            label: Text(
-                              _startDate != null ? _dateFormat.format(_startDate!) : 'Start Date',
+                            child: Text(
+                              _startDate != null ? DateFormat('yyyy-MM-dd').format(_startDate!) : 'Start Date',
                               style: TextStyle(
                                 color: _startDate != null ? Colors.deepPurple.shade900 : Colors.deepPurple.shade400,
                               ),
                             ),
-                            onPressed: () => _pickDate(context, true),
+                            onPressed: () => _pickDate(context, true), // Start date button
                           ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: OutlinedButton.icon(
+                          child: OutlinedButton(
                             style: OutlinedButton.styleFrom(
                               foregroundColor: Colors.deepPurple,
                               side: BorderSide(color: Colors.deepPurple.shade300),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                             ),
-                            icon: const Icon(Icons.date_range),
-                            label: Text(
-                              _endDate != null ? _dateFormat.format(_endDate!) : 'End Date',
+                            child: Text(
+                              _endDate != null ? DateFormat('yyyy-MM-dd').format(_endDate!) : 'End Date',
                               style: TextStyle(
                                 color: _endDate != null ? Colors.deepPurple.shade900 : Colors.deepPurple.shade400,
                               ),
                             ),
-                            onPressed: () => _pickDate(context, false),
+                            onPressed: () => _pickDate(context, false), // End date button
                           ),
                         ),
                       ],
@@ -260,7 +295,7 @@ class _BuyReportWidgetState extends State<BuyReportWidget> {
                       controller: _searchController,
                       decoration: InputDecoration(
                         prefixIcon: Icon(Icons.search, color: Colors.deepPurple.shade400),
-                        hintText: 'Search by any field (car, customer, contact, price...)',
+                        hintText: 'Search by car, buyer, contact, or address...',
                         hintStyle: TextStyle(color: Colors.deepPurple.shade200),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -281,98 +316,57 @@ class _BuyReportWidgetState extends State<BuyReportWidget> {
             ),
             const SizedBox(height: 20),
             Expanded(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  return StreamBuilder<QuerySnapshot>(
-                    stream: FirebaseFirestore.instance.collection('buy').snapshots(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator(color: Colors.deepPurple));
-                      }
-                      if (snapshot.hasError) {
-                        return Center(
-                            child: Text('Error: ${snapshot.error}', style: const TextStyle(color: Colors.black)));
-                      }
+              child: StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance.collection('buy').snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator(color: Colors.deepPurple));
+                  }
+                  if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  }
 
-                      // Update allDocs and mark filter needed
-                      if (snapshot.hasData) {
-                        final newDocs = snapshot.data!.docs;
-                        // Only update if data changed to avoid infinite loops
-                        if (newDocs.length != _allDocs.length ||
-                            !_allDocs.every((doc) => newDocs.contains(doc))) {
-                          _allDocs = newDocs;
-                          _needsFilterUpdate = true;
-                        }
-                      }
+                  _allDocs = snapshot.data?.docs ?? [];
+                  if (_filteredDocs.isEmpty) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) => _applyFilterAndSort());
+                  }
 
-                      // Apply filter and sort if needed (do it outside build with post frame)
-                      if (_needsFilterUpdate) {
-                        WidgetsBinding.instance.addPostFrameCallback((_) => _applyFilterAndSort());
-                      }
-
-                      if (_filteredDocs.isEmpty) {
-                        return const Center(
-                          child: Text(
-                            'No records found',
-                            style: TextStyle(color: Colors.deepPurple),
-                          ),
-                        );
-                      }
-
-                      return SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: DataTable(
-                          sortAscending: _sortAscending,
-                          sortColumnIndex: _sortColumnIndex,
-                          headingRowColor: MaterialStateProperty.all(Colors.deepPurple.shade100),
-                          columns: [
-                            DataColumn(
-                              label: _header('Car Name'),
-                              onSort: (columnIndex, ascending) => _onSort(columnIndex, ascending),
-                            ),
-                            DataColumn(
-                              label: _header('Customer Name'),
-                              onSort: (columnIndex, ascending) => _onSort(columnIndex, ascending),
-                            ),
-                            DataColumn(
-                              label: _header('Contact'),
-                              onSort: (columnIndex, ascending) => _onSort(columnIndex, ascending),
-                            ),
-                            DataColumn(
-                              label: _header('Price'),
-                              numeric: true,
-                              onSort: (columnIndex, ascending) => _onSort(columnIndex, ascending),
-                            ),
-                            DataColumn(
-                              label: _header('Quantity'),
-                              numeric: true,
-                              onSort: (columnIndex, ascending) => _onSort(columnIndex, ascending),
-                            ),
-                            DataColumn(
-                              label: _header('Total Price'),
-                              numeric: true,
-                              onSort: (columnIndex, ascending) => _onSort(columnIndex, ascending),
-                            ),
-                            DataColumn(
-                              label: _header('Date'),
-                              onSort: (columnIndex, ascending) => _onSort(columnIndex, ascending),
-                            ),
-                          ],
-                          rows: _filteredDocs.map((doc) {
-                            final data = doc.data() as Map<String, dynamic>;
-                            return DataRow(cells: [
-                              DataCell(Text(data['carName'] ?? '-')),
-                              DataCell(Text(data['name'] ?? '-')),
-                              DataCell(Text(data['contact'] ?? '-')),
-                              DataCell(Text(_formatCurrency(data['buyPrice']))),
-                              DataCell(Text(data['quantity']?.toString() ?? '-')),
-                              DataCell(Text(_formatCurrency(data['totalPrice']))),
-                              DataCell(Text(_formatTimestamp(data['createdAt']))),
-                            ]);
-                          }).toList(),
-                        ),
-                      );
-                    },
+                  return Card(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 5,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: DataTable(
+                        headingRowColor: MaterialStateProperty.all(Colors.deepPurple.shade100),
+                        dataRowColor: MaterialStateProperty.all(Colors.white),
+                        columnSpacing: 16,
+                        sortColumnIndex: _sortColumnIndex,
+                        sortAscending: _sortAscending,
+                        columns: const [
+                          DataColumn(label: Text('Car')),
+                          DataColumn(label: Text('Price'), numeric: true),
+                          DataColumn(label: Text('Buyer')),
+                          DataColumn(label: Text('Contact')),
+                          DataColumn(label: Text('Email')),
+                          DataColumn(label: Text('Address')),
+                          DataColumn(label: Text('Notes')),
+                          DataColumn(label: Text('Date')),
+                        ],
+                        rows: _filteredDocs.map((doc) {
+                          final data = doc.data() as Map<String, dynamic>;
+                          return DataRow(cells: [
+                            DataCell(Text(data['carName'] ?? '-')),
+                            DataCell(Text(_formatCurrency(data['buyPrice'] as num?))),
+                            DataCell(Text(data['name'] ?? '-')),
+                            DataCell(Text(data['contact'] ?? '-')),
+                            DataCell(Text(data['email'] ?? '-')),
+                            DataCell(Text(data['address'] ?? '-')),
+                            DataCell(Text(data['notes'] ?? '-')),
+                            DataCell(Text(_formatTimestamp(data['createdAt'] as Timestamp?))),
+                          ]);
+                        }).toList(),
+                      ),
+                    ),
                   );
                 },
               ),

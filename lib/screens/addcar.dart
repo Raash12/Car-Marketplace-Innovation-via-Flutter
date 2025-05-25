@@ -17,7 +17,6 @@ class _AddCarPageState extends State<AddCarPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _buyPriceController = TextEditingController();
-  final TextEditingController _rentPriceController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _quantityController = TextEditingController();
 
@@ -78,7 +77,6 @@ class _AddCarPageState extends State<AddCarPage> {
         await FirebaseFirestore.instance.collection('carlist').add({
           'name': _nameController.text.trim(),
           'buyPrice': double.parse(_buyPriceController.text.trim()),
-          'rentPrice': double.parse(_rentPriceController.text.trim()),
           'description': _descriptionController.text.trim(),
           'quantity': int.parse(_quantityController.text.trim()),
           'specifications': {
@@ -144,7 +142,6 @@ class _AddCarPageState extends State<AddCarPage> {
   void dispose() {
     _nameController.dispose();
     _buyPriceController.dispose();
-    _rentPriceController.dispose();
     _descriptionController.dispose();
     _quantityController.dispose();
     super.dispose();
@@ -182,23 +179,6 @@ class _AddCarPageState extends State<AddCarPage> {
                 ],
                 validator: (value) {
                   if (value == null || value.isEmpty) return 'Enter buy price';
-                  final n = num.tryParse(value);
-                  if (n == null) return 'Enter a valid number';
-                  if (n <= 0) return 'Price must be greater than zero';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _rentPriceController,
-                style: const TextStyle(color: Colors.deepPurple),
-                decoration: _inputDecoration('Rent Price'),
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
-                ],
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'Enter rent price';
                   final n = num.tryParse(value);
                   if (n == null) return 'Enter a valid number';
                   if (n <= 0) return 'Price must be greater than zero';

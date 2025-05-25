@@ -95,8 +95,10 @@ class _RentalReportWidgetState extends State<RentalReportWidget> {
       if (_searchQuery.isNotEmpty) {
         final carName = data['carName']?.toString().toLowerCase() ?? '';
         final customerName = data['name']?.toString().toLowerCase() ?? '';
-        if (!carName.contains(_searchQuery.toLowerCase()) && 
-            !customerName.contains(_searchQuery.toLowerCase())) {
+        final contact = data['contact']?.toString().toLowerCase() ?? '';
+        if (!carName.contains(_searchQuery.toLowerCase()) &&
+            !customerName.contains(_searchQuery.toLowerCase()) &&
+            !contact.contains(_searchQuery.toLowerCase())) {
           return false;
         }
       }
@@ -348,7 +350,7 @@ class _RentalReportWidgetState extends State<RentalReportWidget> {
                       controller: _searchController,
                       decoration: InputDecoration(
                         prefixIcon: Icon(Icons.search, color: Colors.deepPurple.shade400),
-                        hintText: 'Search by car or customer name...',
+                        hintText: 'Search by car, customer name, or contact...',
                         hintStyle: TextStyle(color: Colors.deepPurple.shade200),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
