@@ -1,10 +1,5 @@
-import 'package:carmarketplace/screens/feedback.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:carmarketplace/screens/login_screen.dart';
-import 'package:carmarketplace/screens/car_list_screen.dart';
-import 'package:carmarketplace/screens/feedback_screen.dart';
-
+import 'package:flutter_swiper_view/flutter_swiper_view.dart';  // New import
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -15,306 +10,119 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final List<String> carouselImages = [
-    'assets/images/car1.jpg',
-    'assets/images/car2.jpg',
-    'assets/images/car3.jpg',
+    'image/car0.jpg',
+    'image/car00.jpg',
+    'image/car00.jpg',
   ];
 
-  final List<Map<String, dynamic>> featuredCars = [
-    {
-      'image': 'assets/images/featured1.jpg',
-      'title': 'Luxury Sedans',
-      'count': '120+ options',
-    },
-    {
-      'image': 'assets/images/featured2.jpg',
-      'title': 'SUVs',
-      'count': '85+ options',
-    },
-    {
-      'image': 'assets/images/featured3.jpg',
-      'title': 'Sports Cars',
-      'count': '45+ options',
-    },
-  ];
-
-  void _logout(BuildContext context) async {
-    try {
-      await FirebaseAuth.instance.signOut();
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-        (route) => false,
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Logout failed: $e')),
-      );
-    }
-  }
+  int _currentIndex = 0;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Car Marketplace", style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.deepPurple,
+        title: const Text('AutoMarket', 
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: const Color(0xFF0A2463), // Dark blue
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.search, size: 28),
+            icon: const Icon(Icons.search, color: Colors.white),
             onPressed: () {},
-            tooltip: "Search",
           ),
           IconButton(
-            icon: const Icon(Icons.logout, size: 24),
-            onPressed: () => _logout(context),
-            tooltip: "Logout",
+            icon: const Icon(Icons.notifications, color: Colors.white),
+            onPressed: () {},
           ),
         ],
       ),
-      drawer: _buildDrawer(context),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Hero Carousel
-            SizedBox(
-              height: 200,
-              child: Swiper(
-                itemBuilder: (BuildContext context, int index) {
-                  return Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      image: DecorationImage(
-                        image: AssetImage(carouselImages[index]),
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    margin: const EdgeInsets.all(8),
-                  );
-                },
-                itemCount: carouselImages.length,
-                viewportFraction: 0.8,
-                scale: 0.9,
-                autoplay: true,
-                autoplayDelay: 5000,
-              ),
-            ),
-            
-            // Welcome section
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Welcome to CarMarket!",
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.deepPurple,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    "Find your dream car from our extensive collection",
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            
-            // Quick Search
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: TextField(
-                decoration: InputDecoration(
-                  hintText: "Search by make, model, or feature...",
-                  prefixIcon: const Icon(Icons.search),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  filled: true,
-                  fillColor: Colors.grey[100],
-                  contentPadding: const EdgeInsets.symmetric(vertical: 0),
-                ),
-              ),
-            ),
-            
-            // Categories Section
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Text(
-                "Featured Categories",
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            
-            SizedBox(
-              height: 120,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: featuredCars.length,
-                itemBuilder: (context, index) {
-                  return Container(
-                    width: 150,
-                    margin: const EdgeInsets.symmetric(horizontal: 8),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      image: DecorationImage(
-                        image: AssetImage(featuredCars[index]['image']),
-                        fit: BoxFit.cover,
-                        colorFilter: ColorFilter.mode(
-                          Colors.black.withOpacity(0.4), BlendMode.darken),
-                      ),
-                    ),
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            featuredCars[index]['title'],
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                          Text(
-                            featuredCars[index]['count'],
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            
-            // Featured Listings
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "Featured Listings",
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const CarListScreen()),
-                      );
-                    },
-                    child: const Text("View All"),
-                  ),
-                ],
-              ),
-            ),
-            
-            // Sample featured car card
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(10),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.2),
-                    spreadRadius: 2,
-                    blurRadius: 5,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
-                    child: Image.asset(
-                      'assets/images/featured_car.jpg',
-                      height: 180,
-                      width: double.infinity,
+      drawer: _buildDrawer(),
+      body: Column(
+        children: [
+          // Auto-Transitioning Carousel
+          SizedBox(
+            height: 220,
+            child: Swiper(
+              itemBuilder: (context, index) {
+                return Container(
+                  margin: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    image: DecorationImage(
+                      image: AssetImage(carouselImages[index]),
                       fit: BoxFit.cover,
                     ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 6,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
                   ),
-                  Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "2023 Tesla Model S Plaid",
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            const Icon(Icons.speed, size: 16, color: Colors.grey),
-                            const SizedBox(width: 4),
-                            Text(
-                              "1,200 mi",
-                              style: Theme.of(context).textTheme.bodySmall,
-                            ),
-                            const SizedBox(width: 16),
-                            const Icon(Icons.location_on, size: 16, color: Colors.grey),
-                            const SizedBox(width: 4),
-                            Text(
-                              "San Francisco, CA",
-                              style: Theme.of(context).textTheme.bodySmall,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              "\$89,990",
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.deepPurple,
-                              ),
-                            ),
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.deepPurple,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                              ),
-                              onPressed: () {},
-                              child: const Text("View Details"),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                );
+              },
+              itemCount: carouselImages.length,
+              autoplay: true,
+              autoplayDelay: 4000,
+              duration: 1000,
+              curve: Curves.easeInOut,
+              onIndexChanged: (index) => setState(() => _currentIndex = index),
+              pagination: SwiperPagination(
+                builder: DotSwiperPaginationBuilder(
+                  activeColor: const Color(0xFF0A2463),
+                  color: Colors.white.withOpacity(0.5),
+                  size: 8,
+                  activeSize: 10,
+                ),
               ),
             ),
-          ],
-        ),
+          ),
+
+          // Indicators
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: carouselImages.asMap().entries.map((entry) {
+              return Container(
+                width: 8,
+                height: 8,
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: _currentIndex == entry.key
+                      ? const Color(0xFF0A2463)
+                      : Colors.grey[300],
+                ),
+              );
+            }).toList(),
+          ),
+
+          // Main Content
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                _buildSectionHeader('Featured Vehicles'),
+                _buildFeaturedCars(),
+                
+                const SizedBox(height: 20),
+                
+                _buildSectionHeader('Latest Deals'),
+                _buildLatestDeals(),
+              ],
+            ),
+          ),
+        ],
       ),
+      bottomNavigationBar: _buildBottomNavBar(),
     );
   }
 
-  Widget _buildDrawer(BuildContext context) {
+  Widget _buildDrawer() {
     return Drawer(
       backgroundColor: Colors.white,
       child: ListView(
@@ -322,12 +130,12 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           DrawerHeader(
             decoration: const BoxDecoration(
-              color: Colors.deepPurple,
+              color: Color(0xFF0A2463),
               image: DecorationImage(
-                image: AssetImage('assets/images/drawer_bg.jpg'),
+                image: AssetImage('image/drawer_bg.jpg'),
                 fit: BoxFit.cover,
                 colorFilter: ColorFilter.mode(
-                  Colors.deepPurple, BlendMode.overlay),
+                  Color(0xFF0A2463), BlendMode.overlay),
               ),
             ),
             child: Column(
@@ -336,82 +144,223 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 const CircleAvatar(
                   radius: 30,
-                  backgroundImage: AssetImage('assets/images/user_avatar.jpg'),
+                  backgroundImage: AssetImage('image/Logo.png'),
                 ),
                 const SizedBox(height: 10),
-                Text(
-                  'Welcome Back!',
+                const Text(
+                  'Welcome!',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
-                    shadows: [
-                      Shadow(
-                        color: Colors.black.withOpacity(0.3),
-                        blurRadius: 5,
-                        offset: const Offset(1, 1),
-                    ],
                   ),
                 ),
               ],
             ),
           ),
-          ListTile(
-            leading: const Icon(Icons.home, color: Colors.deepPurple),
-            title: const Text('Home'),
-            onTap: () {
-              Navigator.pop(context);
-            },
+          _buildDrawerItem(
+            icon: Icons.home,
+            title: 'Home',
+            onTap: () => Navigator.pop(context),
           ),
-          ListTile(
-            leading: const Icon(Icons.directions_car, color: Colors.deepPurple),
-            title: const Text('Available Cars'),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const CarListScreen()),
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.favorite_border, color: Colors.deepPurple),
-            title: const Text('Saved Listings'),
+          _buildDrawerItem(
+            icon: Icons.directions_car,
+            title: 'View Rentals',
             onTap: () {},
           ),
-          ListTile(
-            leading: const Icon(Icons.sell, color: Colors.deepPurple),
-            title: const Text('Sell Your Car'),
+          _buildDrawerItem(
+            icon: Icons.shopping_cart,
+            title: 'View Buy Options',
+            onTap: () {},
+          ),
+          _buildDrawerItem(
+            icon: Icons.feedback,
+            title: 'Feedback',
             onTap: () {},
           ),
           const Divider(),
-          ListTile(
-            leading: const Icon(Icons.feedback_outlined, color: Colors.deepPurple),
-            title: const Text('Feedback'),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) =>  FeedbackFormPage()),
-              );
-            },
+          _buildDrawerItem(
+            icon: Icons.settings,
+            title: 'Settings',
+            onTap: () {},
           ),
-          ListTile(
-            leading: const Icon(Icons.info_outline, color: Colors.deepPurple),
-            title: const Text('About & Contact'),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const AboutContactPage()),
-              );
-            },
-          ),
-          const Divider(),
-          ListTile(
-            leading: const Icon(Icons.logout, color: Colors.deepPurple),
-            title: const Text('Logout'),
-            onTap: () => _logout(context),
+          _buildDrawerItem(
+            icon: Icons.logout,
+            title: 'Logout',
+            onTap: () {},
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildDrawerItem({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      leading: Icon(icon, color: const Color(0xFF0A2463)),
+      title: Text(title),
+      onTap: onTap,
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          color: Color(0xFF0A2463),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFeaturedCars() {
+    return SizedBox(
+      height: 180,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: 5,
+        itemBuilder: (context, index) {
+          return Container(
+            width: 160,
+            margin: const EdgeInsets.only(right: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 6,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(12)),
+                  child:Image.asset(
+    'image/car$index.jpg', // Starts from 0
+    height: 100,
+    width: double.infinity,
+    fit: BoxFit.cover,)
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Car Model ${index + 1}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '\$${(25000 + index * 5000).toString()}',
+                        style: const TextStyle(
+                          color: Color(0xFF0A2463),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildLatestDeals() {
+    return Column(
+      children: List.generate(3, (index) {
+        return Card(
+          margin: const EdgeInsets.only(bottom: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child:  Image.asset(
+    'image/car9.jpeg', // Static name
+    height: 100,
+    width: double.infinity,
+    fit: BoxFit.cover,
+  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Special Deal ${index + 1}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Limited time offer',
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.chevron_right),
+                  onPressed: () {},
+                ),
+              ],
+            ),
+          ),
+        );
+      }),
+    );
+  }
+
+  Widget _buildBottomNavBar() {
+    return BottomNavigationBar(
+      currentIndex: 0,
+      selectedItemColor: const Color(0xFF0A2463),
+      unselectedItemColor: Colors.grey,
+      items: const [
+        BottomNavigationBarItem(
+          icon: Icon(Icons.home),
+          label: 'Home',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.explore),
+          label: 'Explore',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.favorite_border),
+          label: 'Favorites',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.person),
+          label: 'Profile',
+        ),
+      ],
     );
   }
 }

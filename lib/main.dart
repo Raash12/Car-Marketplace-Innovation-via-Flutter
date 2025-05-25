@@ -50,6 +50,7 @@
 
 import 'package:carmarketplace/screens/buy_report.dart';
 import 'package:carmarketplace/screens/addmin_view_rental_car_user.dart';
+import 'package:carmarketplace/screens/home_screen.dart';
 import 'package:carmarketplace/screens/viewrentalcar.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -84,7 +85,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const AdminDashboard (), // viewStart from the welcome screen
+      home: const HomeScreen (), // viewStart from the welcome screen
      
     );
   }

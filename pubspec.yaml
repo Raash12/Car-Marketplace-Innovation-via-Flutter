@@ -26,6 +26,7 @@ dependencies:
   excel: ^2.0.5
   path_provider: ^2.1.2
   provider: ^6.1.5
+  flutter_swiper_view: ^1.1.6 
   
 
 dev_dependencies:
