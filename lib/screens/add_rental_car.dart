@@ -22,7 +22,7 @@ class _AddRentalCarPageState extends State<AddRentalCarPage> {
   String _fuelType = 'Petrol';
   File? _image;
   final ImagePicker picker = ImagePicker();
-  final String imgbbApiKey = 'YOUR_IMGBB_API_KEY'; // Replace with your actual API key
+  final String imgbbApiKey = '409164d54cc9cb69bc6e0c8910d9f487'; // ✅ Your API key
 
   final List<String> _mileageOptions = ['10 km/l', '12 km/l', '15 km/l', '18 km/l', '20 km/l', '25 km/l'];
   String _selectedMileage = '15 km/l';
@@ -31,21 +31,12 @@ class _AddRentalCarPageState extends State<AddRentalCarPage> {
     try {
       final pickedFile = await picker.pickImage(source: ImageSource.gallery);
       if (pickedFile != null) {
-        final file = File(pickedFile.path);
-        if (await file.exists()) {
-          setState(() {
-            _image = file;
-          });
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Selected file does not exist.')),
-          );
-        }
+        setState(() {
+          _image = File(pickedFile.path);
+        });
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Image selection failed: $e')),
-      );
+      _showMessage('Image selection failed: $e', isError: true);
     }
   }
 
@@ -56,13 +47,16 @@ class _AddRentalCarPageState extends State<AddRentalCarPage> {
         Uri.parse("https://api.imgbb.com/1/upload?key=$imgbbApiKey"),
         body: {"image": base64Image},
       );
+
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
         return responseData["data"]["url"];
       } else {
+        print('Image upload failed: ${response.body}');
         return null;
       }
     } catch (e) {
+      print('Upload error: $e');
       return null;
     }
   }
@@ -71,7 +65,7 @@ class _AddRentalCarPageState extends State<AddRentalCarPage> {
     if (_formKey.currentState!.validate() && _image != null) {
       try {
         final imageUrl = await uploadImageToImgBB(_image!);
-        if (imageUrl == null) throw Exception("Failed to upload image to ImgBB");
+        if (imageUrl == null) throw Exception("Failed to upload image.");
 
         await FirebaseFirestore.instance.collection('rental_cars').add({
           'name': _nameController.text.trim(),
@@ -85,10 +79,7 @@ class _AddRentalCarPageState extends State<AddRentalCarPage> {
           'createdAt': Timestamp.now(),
         });
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Rental car added successfully'), backgroundColor: Colors.green),
-        );
-
+        _showMessage('Rental car added successfully!', isSuccess: true);
         _formKey.currentState!.reset();
         setState(() {
           _image = null;
@@ -96,18 +87,20 @@ class _AddRentalCarPageState extends State<AddRentalCarPage> {
           _selectedMileage = '15 km/l';
         });
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error adding rental car: $e'), backgroundColor: Colors.redAccent),
-        );
+        _showMessage('Error: $e', isError: true);
       }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please complete all fields and select an image.'),
-          backgroundColor: Colors.deepPurple,
-        ),
-      );
+      _showMessage('Fill all fields and select an image.', isError: true);
     }
+  }
+
+  void _showMessage(String message, {bool isSuccess = false, bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.red : (isSuccess ? Colors.green : Colors.deepPurple),
+      ),
+    );
   }
 
   InputDecoration _inputDecoration(String label) {
@@ -124,14 +117,6 @@ class _AddRentalCarPageState extends State<AddRentalCarPage> {
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
         borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Colors.redAccent, width: 2),
-      ),
-      focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Colors.redAccent, width: 2),
       ),
     );
   }
@@ -161,71 +146,57 @@ class _AddRentalCarPageState extends State<AddRentalCarPage> {
             children: [
               TextFormField(
                 controller: _nameController,
-                style: const TextStyle(color: Colors.deepPurple),
                 decoration: _inputDecoration('Car Name'),
-                validator: (value) => value!.isEmpty ? 'Enter car name' : null,
+                style: const TextStyle(color: Colors.deepPurple),
+                validator: (value) => value == null || value.isEmpty ? 'Enter car name' : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _rentalPriceController,
-                style: const TextStyle(color: Colors.deepPurple),
                 decoration: _inputDecoration('Rental Price'),
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: TextInputType.numberWithOptions(decimal: true),
+                style: const TextStyle(color: Colors.deepPurple),
                 inputFormatters: [
                   FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
                 ],
                 validator: (value) {
                   if (value == null || value.isEmpty) return 'Enter rental price';
                   final n = num.tryParse(value);
-                  if (n == null) return 'Enter a valid number';
-                  if (n <= 0) return 'Rental price must be greater than zero';
+                  if (n == null || n <= 0) return 'Enter valid price';
                   return null;
                 },
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _descriptionController,
-                style: const TextStyle(color: Colors.deepPurple),
                 decoration: _inputDecoration('Description'),
                 maxLines: 3,
-                validator: (value) => value!.isEmpty ? 'Enter description' : null,
+                style: const TextStyle(color: Colors.deepPurple),
+                validator: (value) => value == null || value.isEmpty ? 'Enter description' : null,
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 value: _selectedMileage,
                 decoration: _inputDecoration('Mileage'),
-                dropdownColor: Colors.white,
-                style: const TextStyle(color: Colors.deepPurple),
                 items: _mileageOptions.map((mileage) {
                   return DropdownMenuItem(
                     value: mileage,
-                    child: Text(mileage, style: const TextStyle(color: Colors.deepPurple)),
+                    child: Text(mileage),
                   );
                 }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedMileage = value!;
-                  });
-                },
-                validator: (value) => value == null || value.isEmpty ? 'Select mileage' : null,
+                onChanged: (value) => setState(() => _selectedMileage = value!),
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 value: _fuelType,
                 decoration: _inputDecoration('Fuel Type'),
-                dropdownColor: Colors.white,
-                style: const TextStyle(color: Colors.deepPurple),
                 items: ['Petrol', 'Diesel', 'Electric', 'Hybrid'].map((type) {
                   return DropdownMenuItem(
                     value: type,
-                    child: Text(type, style: const TextStyle(color: Colors.deepPurple)),
+                    child: Text(type),
                   );
                 }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _fuelType = value!;
-                  });
-                },
+                onChanged: (value) => setState(() => _fuelType = value!),
               ),
               const SizedBox(height: 16),
               _image == null
@@ -235,19 +206,17 @@ class _AddRentalCarPageState extends State<AddRentalCarPage> {
               ElevatedButton.icon(
                 onPressed: _pickImage,
                 icon: const Icon(Icons.image, color: Colors.white),
-                label: const Text('Select Image from Device', style: TextStyle(color: Colors.white)),
+                label: const Text('Select Image', style: TextStyle(color: Colors.white)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.deepPurple,
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
                 ),
               ),
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: _addRentalCarToFirestore,
-                child: const Text('Add Rental Car', style: TextStyle(color: Colors.deepPurple)),
+                child: const Text('Add Rental Car', style: TextStyle(color: Colors.white)),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  side: const BorderSide(color: Colors.deepPurple, width: 2),
+                  backgroundColor: Colors.deepPurple,
                   padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 30),
                   textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),

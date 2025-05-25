@@ -138,12 +138,12 @@ class _ViewUserCarPageState extends State<ViewUserCarPage> {
             final specs = car['specifications'] ?? {};
             final name = (car['name'] ?? '').toString().toLowerCase();
             final fuelType = (specs['fuelType'] ?? '').toString().toLowerCase();
-            final buyPrice = (car['buyPrice'] ?? '').toString().toLowerCase();
+          
             final rentPrice = (car['rentPrice'] ?? '').toString().toLowerCase();
 
             return name.contains(_searchQuery) ||
                 fuelType.contains(_searchQuery) ||
-                buyPrice.contains(_searchQuery) ||
+               
                 rentPrice.contains(_searchQuery);
           }).toList();
 
@@ -203,7 +203,6 @@ class _ViewUserCarPageState extends State<ViewUserCarPage> {
                                 style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.deepPurple),
                               ),
                               const SizedBox(height: 6),
-                              Text('Buy: \$${car['buyPrice'] ?? 'N/A'}', style: TextStyle(fontSize: 16, color: Colors.grey[700])),
                               Text('Rent: \$${car['rentPrice'] ?? 'N/A'}', style: TextStyle(fontSize: 16, color: Colors.grey[700])),
                               Text('Fuel: ${specs['fuelType'] ?? 'N/A'}', style: TextStyle(fontSize: 16, color: Colors.grey[700])),
                             ],
@@ -242,7 +241,7 @@ class _ViewUserCarPageState extends State<ViewUserCarPage> {
                               );
                             },
                             icon: const Icon(Icons.shopping_bag_outlined),
-                            label: const Text('Buy'),
+                            label: const Text('Rent'),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.green,
                               foregroundColor: Colors.white,

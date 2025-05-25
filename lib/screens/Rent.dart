@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
 import 'pdf_rental_invoice_service.dart';
 
+
 class RentalPage extends StatefulWidget {
   final Map<String, dynamic> carData;
 

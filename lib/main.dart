@@ -32,7 +32,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const AddRentalCarPage(), // Start from the welcome screen
+      home: const ViewUserCarPage(), // Start from the welcome screen
       // routes: {
       //   '/welcome': (context) => const WelcomeScreen(),
       //   '/login': (context) =>  LoginScreen(),
