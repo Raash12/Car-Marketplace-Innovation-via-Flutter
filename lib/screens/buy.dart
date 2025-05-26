@@ -1,3 +1,4 @@
+import 'package:carmarketplace/utils/payment.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:printing/printing.dart';
@@ -45,6 +46,20 @@ class _BuyCarPageState extends State<BuyCarPage> {
       final double price = _parsePrice(widget.carData['buyPrice']);
 
       try {
+        final paymentData = {
+          "accountNo": _contactController.text.trim(),
+          "referenceId": "CAR-${DateTime.now().millisecondsSinceEpoch}",
+          "amount": price,
+          "currency": "USD",
+          "description": "Buying: ${widget.carData['name']}",
+        };
+
+        final paymentResult = await Payment.paymentProcessing(paymentData);
+        if (!paymentResult['success']) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text('Payment Failed: ${paymentResult['message']}')));
+          return;
+        }
         await FirebaseFirestore.instance.collection('buy').add({
           'carName': widget.carData['name'],
           'buyPrice': price,
@@ -61,15 +76,19 @@ class _BuyCarPageState extends State<BuyCarPage> {
           'contact': _contactController.text.trim(),
           'email': _emailController.text.trim(),
           'address': _addressController.text.trim(),
+          'paymentReference': paymentData['referenceId'] as String,
         };
 
         final pdfService = PdfInvoiceService();
-        final pdfData = await pdfService.generateInvoicePdf(widget.carData, buyerInfo);
+        final pdfData =
+            await pdfService.generateInvoicePdf(widget.carData, buyerInfo);
 
         await Printing.layoutPdf(onLayout: (format) async => pdfData);
 
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Car purchased for \$${price.toStringAsFixed(2)}')),
+          SnackBar(
+              content: Text(
+                  'Car purchased for \$${price.toStringAsFixed(2)} and Invoice: ${paymentResult['invoice']}')),
         );
 
         Navigator.pop(context);
@@ -100,7 +119,8 @@ class _BuyCarPageState extends State<BuyCarPage> {
             children: [
               Text(
                 'Car: ${widget.carData['name']}',
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                style:
+                    const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 4),
               Text(
@@ -108,10 +128,10 @@ class _BuyCarPageState extends State<BuyCarPage> {
                 style: TextStyle(fontSize: 16, color: Colors.grey[700]),
               ),
               const SizedBox(height: 24),
-
               Card(
                 elevation: 3,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
@@ -124,7 +144,9 @@ class _BuyCarPageState extends State<BuyCarPage> {
                           border: OutlineInputBorder(),
                         ),
                         validator: (value) =>
-                            (value == null || value.trim().isEmpty) ? 'Please enter your name' : null,
+                            (value == null || value.trim().isEmpty)
+                                ? 'Please enter your name'
+                                : null,
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
@@ -159,7 +181,8 @@ class _BuyCarPageState extends State<BuyCarPage> {
                           if (value == null || value.trim().isEmpty) {
                             return 'Please enter your email';
                           }
-                          if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value.trim())) {
+                          if (!RegExp(r'^[^@]+@[^@]+\.[^@]+')
+                              .hasMatch(value.trim())) {
                             return 'Enter a valid email address';
                           }
                           return null;
@@ -175,7 +198,9 @@ class _BuyCarPageState extends State<BuyCarPage> {
                           border: OutlineInputBorder(),
                         ),
                         validator: (value) =>
-                            (value == null || value.trim().isEmpty) ? 'Please enter your address' : null,
+                            (value == null || value.trim().isEmpty)
+                                ? 'Please enter your address'
+                                : null,
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
