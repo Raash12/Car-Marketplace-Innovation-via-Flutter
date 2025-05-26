@@ -67,10 +67,12 @@ import 'package:carmarketplace/screens/viewcar_user.dart';
 import 'package:carmarketplace/screens/rental_report.dart';
 import 'package:carmarketplace/screens/feedbackreport.dart';
 import 'package:carmarketplace/screens/add_rental_car.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await dotenv.load();
   runApp(const MyApp());
 }
 
