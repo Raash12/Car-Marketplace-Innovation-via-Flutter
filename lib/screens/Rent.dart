@@ -1,13 +1,9 @@
 import 'package:carmarketplace/services/pdf_rental_invoice_service.dart';
-import 'package:carmarketplace/utils/Utils.dart';
-import 'package:flutter/material.dart';
+import 'package:carmarketplace/utils/payment.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-
-const String _waafiUrl = 'https://api.waafipay.net/asm';
 
 class RentalPage extends StatefulWidget {
   final Map<String, dynamic> carData;
@@ -118,7 +114,7 @@ class _RentalPageState extends State<RentalPage> {
         "description": "Rental: ${widget.carData['name']}",
       };
 
-      final paymentResult = await _processPayment(paymentData);
+      final paymentResult = await Payment.paymentProcessing(paymentData);
       if (!paymentResult['success']) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text('Payment Failed: ${paymentResult['message']}')));
@@ -156,65 +152,6 @@ class _RentalPageState extends State<RentalPage> {
           content: Text('An unexpected error occurred: ${e.toString()}')));
     } finally {
       setState(() => _isProcessing = false);
-    }
-  }
-
-  Future<Map<String, dynamic>> _processPayment(
-      Map<String, dynamic> paymentData) async {
-    try {
-      String _invoice = Utils.generateInvoiceId();
-      var paymentBody = {
-        'schemaVersion': "1.0",
-        "requestId": "10111331033",
-        'timestamp': DateTime.now().toString(),
-        'channelName': "WEB",
-        'serviceName': "API_PURCHASE",
-        'serviceParams': {
-          'merchantUid': "M0910291", // dotenv.env['MERCHANT_UID'],
-          'apiUserId': "1000416", // dotenv.env['API_USER_ID'],
-          'apiKey': "API-675418888AHX", //dotenv.env['API_KEY'],
-          'paymentMethod': "mwallet_account",
-          'payerInfo': {
-            'accountNo': paymentData['accountNo'],
-          },
-          'transactionInfo': {
-            'referenceId': paymentData['referenceId'],
-            'invoiceId': _invoice,
-            'amount': paymentData['amount'],
-            'currency': "USD",
-            'description': paymentData['description'],
-          },
-        },
-      };
-
-      final response = await http.post(
-        Uri.parse(_waafiUrl),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode(paymentBody),
-      );
-
-      final responseData = json.decode(response.body);
-      if (responseData['responseCode'] == 200) {
-        return {
-          'success': true,
-          'message': responseData['responseMsg'] ?? 'Payment processing failed',
-          'invoiceRef': _invoice,
-        };
-      } else {
-        return {
-          'success': false,
-          'message':
-              'Server responded with status ${responseData['responseCode']}: ${responseData['responseMsg']}',
-          'invoiceRef': null,
-        };
-      }
-    } catch (e) {
-      return {
-        'success': false,
-        'message':
-            'An unexpected error occurred during payment processing: ${e.toString()}',
-        'invoiceRef': null,
-      };
     }
   }
 
