@@ -1,3 +1,4 @@
+import 'package:carmarketplace/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'admin_dashboard.dart';
@@ -126,7 +127,7 @@ class LoginScreen extends StatelessWidget {
                               Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (_) => const ViewUserCarPage()),
+                                    builder: (_) => const HomeScreen()),
                               );
                             } on FirebaseAuthException catch (e) {
                               ScaffoldMessenger.of(context).showSnackBar(
