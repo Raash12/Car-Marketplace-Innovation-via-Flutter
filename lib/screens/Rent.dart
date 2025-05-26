@@ -1,4 +1,5 @@
 import 'package:carmarketplace/services/pdf_rental_invoice_service.dart';
+import 'package:carmarketplace/utils/Utils.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
@@ -6,8 +7,7 @@ import 'package:printing/printing.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-// Replace with your actual backend URL
-const String _backendInitiatePaymentUrl = 'http://10.0.2.2:3000/api/payment';
+const String _waafiUrl = 'https://api.waafipay.net/asm';
 
 class RentalPage extends StatefulWidget {
   final Map<String, dynamic> carData;
@@ -45,7 +45,9 @@ class _RentalPageState extends State<RentalPage> {
   }
 
   void _updateTotalPrice() {
-    if (_startDate != null && _endDate != null && !_endDate!.isBefore(_startDate!)) {
+    if (_startDate != null &&
+        _endDate != null &&
+        !_endDate!.isBefore(_startDate!)) {
       final rentalDays = _endDate!.difference(_startDate!).inDays + 1;
       final pricePerDay = _parsePrice(widget.carData['rentalPrice']);
       setState(() {
@@ -63,7 +65,9 @@ class _RentalPageState extends State<RentalPage> {
   Future<void> _pickDate(BuildContext context, bool isStart) async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: isStart ? (_startDate ?? DateTime.now()) : (_endDate ?? DateTime.now()),
+      initialDate: isStart
+          ? (_startDate ?? DateTime.now())
+          : (_endDate ?? DateTime.now()),
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365)),
     );
@@ -86,18 +90,14 @@ class _RentalPageState extends State<RentalPage> {
   Future<void> _submitBooking() async {
     if (!_formKey.currentState!.validate()) return;
     if (_startDate == null || _endDate == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select both start and end dates.')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Please select both start and end dates.')));
       return;
     }
 
     if (_endDate!.isBefore(_startDate!)) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('End date cannot be before start date.')));
-      return;
-    }
-
-    final pin = await _showPinDialog();
-    if (pin == null || pin.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment cancelled: PIN not entered.')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('End date cannot be before start date.')));
       return;
     }
 
@@ -112,7 +112,6 @@ class _RentalPageState extends State<RentalPage> {
 
       final paymentData = {
         "accountNo": _paymentNumberController.text.trim(),
-        "pin": pin,
         "referenceId": "CAR-${DateTime.now().millisecondsSinceEpoch}",
         "amount": totalPrice,
         "currency": "USD",
@@ -121,7 +120,8 @@ class _RentalPageState extends State<RentalPage> {
 
       final paymentResult = await _processPayment(paymentData);
       if (!paymentResult['success']) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Payment Failed: ${paymentResult['message']}')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('Payment Failed: ${paymentResult['message']}')));
         return;
       }
 
@@ -138,90 +138,84 @@ class _RentalPageState extends State<RentalPage> {
         'startDate': Timestamp.fromDate(_startDate!),
         'endDate': Timestamp.fromDate(_endDate!),
         'createdAt': Timestamp.now(),
-        'paymentReference': paymentResult['transactionId'],
+        'paymentReference': paymentData['referenceId'],
         'status': 'confirmed',
       };
 
       await FirebaseFirestore.instance.collection('rentals').add(rentalData);
-      final pdfBytes = await PdfRentalInvoiceService().generateRentalInvoicePdf(rentalData);
+      final pdfBytes =
+          await PdfRentalInvoiceService().generateRentalInvoicePdf(rentalData);
       await Printing.layoutPdf(onLayout: (format) async => pdfBytes);
 
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Payment successful! Rental booked for \$${totalPrice.toStringAsFixed(2)}. Invoice generated.')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(
+              'Payment successful! Rental booked for \$${totalPrice.toStringAsFixed(2)}. Invoice generated.')));
       Navigator.pop(context);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('An unexpected error occurred: ${e.toString()}')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('An unexpected error occurred: ${e.toString()}')));
     } finally {
       setState(() => _isProcessing = false);
     }
   }
 
-  Future<Map<String, dynamic>> _processPayment(Map<String, dynamic> paymentData) async {
+  Future<Map<String, dynamic>> _processPayment(
+      Map<String, dynamic> paymentData) async {
     try {
+      String _invoice = Utils.generateInvoiceId();
+      var paymentBody = {
+        'schemaVersion': "1.0",
+        "requestId": "10111331033",
+        'timestamp': DateTime.now().toString(),
+        'channelName': "WEB",
+        'serviceName': "API_PURCHASE",
+        'serviceParams': {
+          'merchantUid': "M0910291", // dotenv.env['MERCHANT_UID'],
+          'apiUserId': "1000416", // dotenv.env['API_USER_ID'],
+          'apiKey': "API-675418888AHX", //dotenv.env['API_KEY'],
+          'paymentMethod': "mwallet_account",
+          'payerInfo': {
+            'accountNo': paymentData['accountNo'],
+          },
+          'transactionInfo': {
+            'referenceId': paymentData['referenceId'],
+            'invoiceId': _invoice,
+            'amount': paymentData['amount'],
+            'currency': "USD",
+            'description': paymentData['description'],
+          },
+        },
+      };
+
       final response = await http.post(
-        Uri.parse(_backendInitiatePaymentUrl),
+        Uri.parse(_waafiUrl),
         headers: {'Content-Type': 'application/json'},
-        body: json.encode(paymentData),
+        body: json.encode(paymentBody),
       );
 
-      if (response.statusCode == 200) {
-        final responseData = json.decode(response.body);
+      final responseData = json.decode(response.body);
+      if (responseData['responseCode'] == 200) {
         return {
-          'success': responseData['success'] ?? false,
-          'message': responseData['message'] ?? 'Payment processing failed',
-          'transactionId': responseData['transactionId'],
+          'success': true,
+          'message': responseData['responseMsg'] ?? 'Payment processing failed',
+          'invoiceRef': _invoice,
         };
       } else {
         return {
           'success': false,
-          'message': 'Server responded with status ${response.statusCode}: ${response.body}',
-          'transactionId': null,
+          'message':
+              'Server responded with status ${responseData['responseCode']}: ${responseData['responseMsg']}',
+          'invoiceRef': null,
         };
       }
     } catch (e) {
       return {
         'success': false,
-        'message': 'An unexpected error occurred during payment processing: ${e.toString()}',
-        'transactionId': null,
+        'message':
+            'An unexpected error occurred during payment processing: ${e.toString()}',
+        'invoiceRef': null,
       };
     }
-  }
-
-  Future<String?> _showPinDialog() async {
-    final pinController = TextEditingController();
-    return await showDialog<String>(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: const Text('EVC Plus Payment'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Enter your EVC Plus PIN to confirm payment'),
-            const SizedBox(height: 16),
-            TextField(
-              controller: pinController,
-              keyboardType: TextInputType.number,
-              obscureText: true,
-              decoration: const InputDecoration(labelText: 'EVC Plus PIN', border: OutlineInputBorder()),
-              maxLength: 5,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          ElevatedButton(
-            onPressed: () {
-              if (pinController.text.length >= 4) {
-                Navigator.pop(context, pinController.text);
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Enter a valid PIN (4-5 digits)')));
-              }
-            },
-            child: const Text('Confirm Payment'),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
@@ -229,7 +223,8 @@ class _RentalPageState extends State<RentalPage> {
     final pricePerDay = _parsePrice(widget.carData['rentalPrice']);
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Book Rental"), backgroundColor: Colors.deepPurple),
+      appBar: AppBar(
+          title: const Text("Book Rental"), backgroundColor: Colors.deepPurple),
       body: Stack(
         children: [
           SingleChildScrollView(
@@ -239,41 +234,91 @@ class _RentalPageState extends State<RentalPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('${widget.carData['name']}', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                  Text('${widget.carData['name']}',
+                      style: const TextStyle(
+                          fontSize: 22, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
-                  Text('\$${pricePerDay.toStringAsFixed(2)} per day', style: TextStyle(color: Colors.grey[700])),
+                  Text('\$${pricePerDay.toStringAsFixed(2)} per day',
+                      style: TextStyle(color: Colors.grey[700])),
                   const SizedBox(height: 24),
-                  TextFormField(controller: _nameController, decoration: const InputDecoration(labelText: 'Full Name', border: OutlineInputBorder()), validator: (value) => value?.isEmpty ?? true ? 'Required' : null),
+                  TextFormField(
+                      controller: _nameController,
+                      decoration: const InputDecoration(
+                          labelText: 'Full Name', border: OutlineInputBorder()),
+                      validator: (value) =>
+                          value?.isEmpty ?? true ? 'Required' : null),
                   const SizedBox(height: 16),
-                  TextFormField(controller: _contactController, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: 'Phone Number', border: OutlineInputBorder()), validator: (value) => value?.isEmpty ?? true ? 'Required' : null),
+                  TextFormField(
+                      controller: _contactController,
+                      keyboardType: TextInputType.phone,
+                      decoration: const InputDecoration(
+                          labelText: 'Phone Number',
+                          border: OutlineInputBorder()),
+                      validator: (value) =>
+                          value?.isEmpty ?? true ? 'Required' : null),
                   const SizedBox(height: 16),
-                  TextFormField(controller: _paymentNumberController, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: 'EVC Plus Number', hintText: 'e.g., 615123456', border: OutlineInputBorder()), validator: (value) {
-                    if (value?.isEmpty ?? true) return 'Required';
-                    if (!RegExp(r'^[0-9]{9}$').hasMatch(value!)) {
-                      return 'Enter a valid 9-digit number';
-                    }
-                    return null;
-                  }),
+                  TextFormField(
+                      controller: _paymentNumberController,
+                      keyboardType: TextInputType.phone,
+                      decoration: const InputDecoration(
+                          labelText: 'EVC Plus Number',
+                          hintText: 'e.g., 615123456',
+                          border: OutlineInputBorder()),
+                      validator: (value) {
+                        if (value?.isEmpty ?? true) return 'Required';
+                        if (!RegExp(r'^[0-9]{9}$').hasMatch(value!)) {
+                          return 'Enter a valid 9-digit number';
+                        }
+                        return null;
+                      }),
                   const SizedBox(height: 16),
-                  TextFormField(controller: _paymentAmountController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Amount (USD)', border: OutlineInputBorder()), readOnly: true),
+                  TextFormField(
+                      controller: _paymentAmountController,
+                      enabled: false,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                          labelText: 'Amount (USD)',
+                          border: OutlineInputBorder()),
+                      readOnly: true),
                   const SizedBox(height: 24),
                   Row(
                     children: [
-                      Expanded(child: OutlinedButton.icon(icon: const Icon(Icons.calendar_today), label: Text(_startDate == null ? 'Start Date' : DateFormat('MMM d, yyyy').format(_startDate!)), onPressed: () => _pickDate(context, true))),
+                      Expanded(
+                          child: OutlinedButton.icon(
+                              icon: const Icon(Icons.calendar_today),
+                              label: Text(_startDate == null
+                                  ? 'Start Date'
+                                  : DateFormat('MMM d, yyyy')
+                                      .format(_startDate!)),
+                              onPressed: () => _pickDate(context, true))),
                       const SizedBox(width: 16),
-                      Expanded(child: OutlinedButton.icon(icon: const Icon(Icons.calendar_today), label: Text(_endDate == null ? 'End Date' : DateFormat('MMM d, yyyy').format(_endDate!)), onPressed: _startDate == null ? null : () => _pickDate(context, false))),
+                      Expanded(
+                          child: OutlinedButton.icon(
+                              icon: const Icon(Icons.calendar_today),
+                              label: Text(_endDate == null
+                                  ? 'End Date'
+                                  : DateFormat('MMM d, yyyy')
+                                      .format(_endDate!)),
+                              onPressed: _startDate == null
+                                  ? null
+                                  : () => _pickDate(context, false))),
                     ],
                   ),
                   const SizedBox(height: 24),
                   if (_totalPrice != null) ...[
                     Container(
                       padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(8)),
+                      decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(8)),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('Total Price:', style: TextStyle(fontSize: 18)),
-                          Text('\$${_totalPrice!.toStringAsFixed(2)}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          const Text('Total Price:',
+                              style: TextStyle(fontSize: 18)),
+                          Text('\$${_totalPrice!.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                  fontSize: 18, fontWeight: FontWeight.bold)),
                         ],
                       ),
                     ),
@@ -283,8 +328,14 @@ class _RentalPageState extends State<RentalPage> {
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: _isProcessing ? null : _submitBooking,
-                      style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16), backgroundColor: Colors.deepPurple, foregroundColor: Colors.white),
-                      child: _isProcessing ? const CircularProgressIndicator(color: Colors.white) : const Text('PAY WITH EVC PLUS', style: TextStyle(fontSize: 16)),
+                      style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          backgroundColor: Colors.deepPurple,
+                          foregroundColor: Colors.white),
+                      child: _isProcessing
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text('PAY WITH EVC PLUS',
+                              style: TextStyle(fontSize: 16)),
                     ),
                   ),
                 ],
