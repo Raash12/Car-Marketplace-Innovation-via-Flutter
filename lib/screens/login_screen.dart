@@ -84,9 +84,8 @@ class LoginScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 32),
-              Image.asset('image/car2.jpeg', height: 100),
-              const SizedBox(height: 32),
+            
+              const SizedBox(height: 100),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Column(
