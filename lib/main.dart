@@ -6,6 +6,7 @@ import 'firebase_options.dart';
 import 'package:carmarketplace/screens/welcome_screen.dart';
 import 'package:carmarketplace/screens/login_screen.dart';
 import 'package:carmarketplace/screens/register_screen.dart';
+import 'package:carmarketplace/screens/home_screen.dart';
 import 'package:carmarketplace/screens/admin_dashboard.dart';
 import 'package:carmarketplace/screens/addcar.dart';
 import 'package:carmarketplace/screens/addmin_buy_viewcar.dart';
