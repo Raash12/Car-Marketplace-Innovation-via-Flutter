@@ -56,6 +56,7 @@ class LoginScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 8),
+                  
                     Row(
                       children: [
                         const Text(
@@ -85,7 +86,13 @@ class LoginScreen extends StatelessWidget {
                 ),
               ),
             
-              const SizedBox(height: 100),
+              const SizedBox(height: 5),
+              Image.asset(
+                "image/log.png",
+                width: 160,
+                height: 160,
+              ),
+              const SizedBox(height: 5),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Column(

@@ -110,8 +110,14 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   ],
                 ),
               ),
-
-              const SizedBox(height: 100),
+ const SizedBox(height: 5),
+              Image.asset(
+                "image/log.png",
+                width: 160,
+                height: 160,
+              ),
+              const SizedBox(height: 5),
+             
 
               
              
